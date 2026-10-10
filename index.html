@@ -457,6 +457,62 @@
     --theme-pattern-size: 46px 46px, 46px 46px;
   }
   html[data-theme="halloween"] body{ background-position: 0 0, 23px 23px; }
+
+  /* Christmas: pine green, cranberry and gold on a soft winter background with light snow. */
+  html[data-theme="christmas"]{
+    --bg:#ECF3EF; --surface-2:#F4F8F5; --line:#D3E2D9; --ink-soft:#4A5F55;
+    --sage:#1E6B48; --sage-deep:#174A33;
+    --theme-title:#174A33; --theme-tab:#9E1C35; --theme-motif:"🎄🎁";
+    --theme-strip: linear-gradient(180deg, transparent 5px, #D4A537 5px), repeating-linear-gradient(135deg, #B3263E 0 10px, #FFFFFF 10px 20px);
+    --theme-pattern: radial-gradient(circle, rgba(255,255,255,0.95) 2.2px, transparent 2.8px), radial-gradient(circle, rgba(255,255,255,0.8) 1.4px, transparent 2px);
+    --theme-pattern-size: 52px 52px, 52px 52px;
+  }
+  html[data-theme="christmas"] body{ background-position: 0 0, 26px 30px; }
+
+  /* New Year: a deep navy header band with gold title and slow fireworks; light content surfaces. */
+  html[data-theme="newyear"]{
+    --bg:#EDEFF7; --surface-2:#F5F6FB; --line:#D8DCEC; --ink-soft:#4B5270;
+    --sage:#3A4A8C; --sage-deep:#1E2A5A;
+    --theme-title:#F3CD6B; --theme-tab:#1E2A5A; --theme-motif:"🎆✨";
+    --theme-strip: repeating-linear-gradient(90deg, #E9C46A 0 10px, transparent 10px 22px);
+    --theme-pattern: radial-gradient(circle, rgba(212,165,55,0.16) 1.6px, transparent 2.2px);
+    --theme-pattern-size: 40px 40px;
+  }
+  html[data-theme="newyear"] .topbar{ background: linear-gradient(180deg, #141C42, #232F66); border-radius: 0 0 26px 26px; margin-bottom: 10px; overflow:hidden; }
+  html[data-theme="newyear"] .topbar > *{ position:relative; z-index:1; }
+  html[data-theme="newyear"] .brand .today{ color:#DDE2F7; }
+  /* Fireworks live only in the header band, behind its controls; slow 7s fade, no flashing. */
+  html[data-theme="newyear"] .topbar::after{ content:""; position:absolute; inset:0; z-index:0; pointer-events:none; opacity:0.35;
+    background:
+      radial-gradient(circle at 46% 42%, transparent 0 12px, rgba(243,205,107,0.9) 13px 14px, transparent 15px 21px, rgba(243,205,107,0.55) 22px 23px, transparent 24px),
+      radial-gradient(circle at 46% 42%, #FFF6D8 0 2px, transparent 3px),
+      radial-gradient(circle at 80% 30%, transparent 0 9px, rgba(242,141,178,0.85) 10px 11px, transparent 12px 17px, rgba(242,141,178,0.5) 18px 19px, transparent 20px),
+      radial-gradient(circle at 92% 70%, transparent 0 8px, rgba(143,211,244,0.85) 9px 10px, transparent 11px 15px, rgba(143,211,244,0.5) 16px 17px, transparent 18px),
+      radial-gradient(circle at 30% 75%, transparent 0 6px, rgba(243,205,107,0.75) 7px 8px, transparent 9px);
+    animation: fwGlow 7s ease-in-out infinite; }
+  @keyframes fwGlow{ 0%,100%{ opacity:0.2; transform:scale(0.97); } 50%{ opacity:0.75; transform:scale(1.02); } }
+  @media (prefers-reduced-motion: reduce){
+    html[data-theme="newyear"] .topbar::after{ animation:none; opacity:0.45; transform:none; }
+  }
+
+  /* Valentine's: rose and berry on a warm blush background. */
+  html[data-theme="valentines"]{
+    --bg:#FBEEF1; --surface-2:#FFF5F7; --line:#F1D3DA; --ink-soft:#6A4B53;
+    --sage:#A8304F; --sage-deep:#7E1A3F;
+    --theme-title:#7E1A3F; --theme-tab:#7E1A3F; --theme-motif:"💖💌";
+    --theme-strip: repeating-linear-gradient(90deg, #E2577F 0 20px, #F7C5D3 20px 40px);
+    --theme-pattern: radial-gradient(circle, rgba(226,87,127,0.10) 2.5px, transparent 3px);
+    --theme-pattern-size: 44px 44px;
+  }
+
+  /* Canada Day: maple red and white with neutral controls — red marks the title, tab and strip only. */
+  html[data-theme="canadaday"]{
+    --bg:#F7F4F3; --surface-2:#FBF9F8; --line:#E7DEDB; --ink-soft:#57514F;
+    --sage:#B71C1C; --sage-deep:#2F3A40;
+    --theme-title:#9A1218; --theme-tab:#A8141B; --theme-motif:"🍁🇨🇦";
+    --theme-strip: linear-gradient(90deg, #D52B1E 0 25%, #FFFFFF 25% 75%, #D52B1E 75%);
+    --theme-pattern: none; --theme-pattern-size: auto;
+  }
 </style>
 </head>
 <body>
@@ -639,11 +695,19 @@
   var THEME_OPTIONS = [
     ["off","○","Off","The normal Our Week look"],
     ["auto","📅","Auto","Change with the season"],
-    ["halloween","🎃","Halloween",""]
+    ["halloween","🎃","Halloween",""],
+    ["christmas","🎄","Christmas",""],
+    ["newyear","🎆","New Year",""],
+    ["valentines","💖","Valentine's",""],
+    ["canadaday","🇨🇦","Canada Day",""]
   ];
-  var THEME_META_COLOR = { none:"#EEF3ED", halloween:"#FBF1E6" };
+  var THEME_META_COLOR = { none:"#EEF3ED", halloween:"#FBF1E6", christmas:"#ECF3EF", newyear:"#17204A", valentines:"#FBEEF1", canadaday:"#F7F4F3" };
   var CELEBRATE_EMOJI_BY_THEME = {
-    halloween: ["🎃","👻","🦇","🍬","🌙","✨"]
+    halloween: ["🎃","👻","🦇","🍬","🌙","✨"],
+    christmas: ["🎄","🎅","🎁","❄️","⛄","🔔"],
+    newyear: ["🎆","🎇","🥳","✨","🎉","🌟"],
+    valentines: ["💖","💘","❤️","🌹","💌","✨"],
+    canadaday: ["🇨🇦","🍁","🎉","❤️","🤍","✨"]
   };
   function uiDefaults(){ return { layout:"A", railPersonId:null, theme:"off" }; }
   function loadUiPrefs(){
