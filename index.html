@@ -115,6 +115,59 @@
   .goal-track{ height:12px; background:#fff; border-radius:999px; overflow:hidden; }
   .goal-fill{ height:100%; border-radius:999px; background: var(--marigold); }
 
+  .person-head-btns{ display:flex; gap:6px; align-items:center; }
+  .cal-mini-btn{ width:44px; height:44px; border-radius:50%; background: var(--surface-2); font-size:20px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .streak-badge{ background:#FDE6DF !important; color:#9A3B23 !important; }
+
+  /* Reward shelf (display only) */
+  .shelf{ margin: 0 12px 12px 12px; padding: 14px 14px 14px 12px; background: linear-gradient(180deg, #FFF8EA, #FBF0DC); border: 1.5px solid #F3DFB8; border-radius: var(--radius-md); display:flex; gap:12px; align-items:center; }
+  .shelf.daily{ background: linear-gradient(180deg, #F7F1FC, #F1EBF7); border-color:#E1D3F0; }
+  .shelf-star{ font-size:40px; line-height:1; flex-shrink:0; }
+  .shelf-main{ flex:1; min-width:0; display:flex; flex-direction:column; gap:6px; }
+  .shelf-title{ font-family:'Fraunces',serif; font-weight:600; font-size:20px; line-height:1.15; color: var(--ink); overflow-wrap:anywhere; }
+  .shelf-pts{ font-size:15px; font-weight:700; color: var(--marigold-ink); }
+  .shelf.daily .shelf-pts{ color:#5B3F80; }
+  .shelf-pts b{ font-size:18px; font-weight:800; }
+  .shelf-track{ height:14px; background:#fff; border-radius:999px; overflow:hidden; }
+  .shelf-fill{ height:100%; border-radius:999px; background: var(--marigold); transition: width .3s ease; }
+  .shelf.daily .shelf-fill{ background: var(--plum); }
+
+  /* Kid view */
+  body.kid-mode .tabs, body.kid-mode .topbar-actions{ display:none; }
+  .kid-top{ display:flex; align-items:center; gap:16px; margin-bottom:16px; flex-wrap:wrap; }
+  .kid-back{ min-height:60px; padding: 0 28px; border-radius:999px; background: var(--sage-deep); color:#fff; font-weight:800; font-size:20px; box-shadow: var(--shadow); }
+  .kid-back:active{ transform: scale(0.97); }
+  .kid-date{ font-family:'Fraunces',serif; font-weight:600; font-size:24px; color: var(--sage-deep); }
+  .kid-card{ background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow); max-width: 900px; margin: 0 auto; overflow:hidden; position:relative; }
+  .kid-card.celebrating{ animation: colPop .6s ease; }
+  .kid-head{ display:flex; align-items:center; gap:18px; padding: 20px 22px 12px 22px; flex-wrap:wrap; }
+  .kid-name{ font-family:'Fraunces',serif; font-weight:600; font-size:36px; margin-right:auto; }
+  .kid-head .points-badge{ font-size:18px; padding: 7px 14px; }
+  .kid-progress{ padding: 0 22px 18px 22px; border-bottom:1px solid var(--line); display:flex; flex-direction:column; gap:10px; }
+  .kid-progress .progress-track{ height:18px; }
+  .kid-progress .progress-label{ font-size:19px; font-weight:700; }
+  .kid-card .chore-list{ padding: 14px 16px; gap:12px; }
+  .kid-card .chore-row{ grid-template-columns: 56px minmax(0,1fr) auto auto; grid-template-areas: "check title pts acts"; min-height:84px; padding: 12px 8px 12px 16px; column-gap:16px; }
+  .kid-card .chore-row.skipped-row{ display:flex; }
+  .kid-card .checkbox{ width:56px; height:56px; }
+  .kid-card .checkbox svg{ width:30px; height:30px; }
+  .kid-card .chore-title{ font-size:22px; }
+  .kid-card .chore-points{ font-size:17px; }
+  .kid-card .shelf{ margin: 0 16px 16px 16px; padding: 18px; }
+  .kid-card .shelf-star{ font-size:52px; }
+  .kid-card .shelf-title{ font-size:24px; }
+  .kid-card .shelf-pts{ font-size:17px; }
+  .kid-card .shelf-track{ height:18px; }
+
+  /* Settings press-and-hold guard */
+  .gear-btn{ position:relative; touch-action:none; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
+  .hold-ring{ position:absolute; left:50%; top:50%; width:52px; height:52px; margin:-26px 0 0 -26px; transform: rotate(-90deg); pointer-events:none; opacity:0; transition: opacity .15s ease; }
+  .hold-ring circle{ fill:none; stroke: var(--marigold); stroke-width:4; stroke-linecap:round; stroke-dasharray:144.5; stroke-dashoffset:144.5; }
+  .gear-btn.holding .hold-ring{ opacity:1; }
+  .gear-btn.holding .hold-ring circle{ stroke-dashoffset:0; transition: stroke-dashoffset 2s linear; }
+  .hold-lbl{ position:absolute; top:100%; right:0; margin-top:8px; background: var(--ink); color:#fff; font-size:14px; font-weight:700; padding:7px 12px; border-radius:999px; white-space:nowrap; pointer-events:none; z-index:5; }
+  .hold-lbl:empty{ display:none; }
+
   /* Calendar */
   .cal-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom: 14px; flex-wrap:wrap; gap:10px; }
   .cal-header h2{ font-size: 26px; margin:0; color: var(--sage-deep); }
@@ -248,7 +301,7 @@
     </div>
     <div class="topbar-actions">
       <button class="icon-btn" id="zoomToggle" title="Zoom">🔍<span class="lbl" id="zoomLbl">Normal</span></button>
-      <button class="icon-btn" id="openSettings" title="Settings">⚙️</button>
+      <button class="icon-btn gear-btn" id="openSettings" title="Settings — press and hold" aria-label="Settings (press and hold for 2 seconds)"><svg class="hold-ring" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="23"/></svg><span aria-hidden="true">⚙️</span><span class="hold-lbl" id="gearLbl"></span></button>
     </div>
   </div>
 
@@ -291,6 +344,7 @@
       <div class="cal-grid" id="calGrid"></div>
     </div>
     <div id="analyticsView" style="display:none;"></div>
+    <div id="kidView" style="display:none;"></div>
   </main>
 </div>
 
@@ -507,6 +561,25 @@
     return { checkmarks: checkmarks, perfectDays: perfectDays };
   }
 
+  // Current run of consecutive perfect days, computed from existing completions
+  // (display only). Days with nothing due are skipped; today only counts once it's
+  // perfect and never breaks the streak while it's still in progress.
+  function currentStreak(personId){
+    var tasks = state.tasks.filter(function(t){ return t.personId === personId; });
+    if(tasks.length === 0) return 0;
+    var earliest = tasks.reduce(function(m, t){ return !m || t.createdDate < m ? t.createdDate : m; }, null);
+    var today = new Date(); today.setHours(0,0,0,0);
+    var tStr = todayStr(today), streak = 0;
+    for(var d = today; todayStr(d) >= earliest; d = addDays(d,-1)){
+      var dStr = todayStr(d);
+      var due = tasks.filter(function(t){ return t.createdDate <= dStr && isActiveDue(t, d, dStr); });
+      if(due.length === 0) continue;
+      if(due.every(function(t){ return t.completions[dStr]; })) streak++;
+      else if(dStr !== tStr) break;
+    }
+    return streak;
+  }
+
   function applyZoom(){
     var factor = ZOOM_FACTORS[state.zoomIndex];
     var wrapper = document.getElementById("zoomWrapper");
@@ -717,7 +790,7 @@
   }
   function refreshTaskViews(){
     renderChores();
-    if(typeof renderKidView === "function") renderKidView();
+    if(currentView === "kid") renderKidView();
     renderToday();
   }
   // Every task mutation goes through here so the 100% celebration fires on the
@@ -834,32 +907,83 @@
     }
   }
 
-  function personColumnHeadHtml(person, metrics, doneCount, dueCount, dayWord){
+  function badgesHtml(person, metrics){
+    var streak = currentStreak(person.id);
+    return '<div class="points-badge" title="Perfect days">⭐ <span data-count-perfect>' + metrics.perfectDays + '</span></div>' +
+      (streak >= 2 ? '<div class="points-badge streak-badge" title="Perfect days in a row">🔥 ' + streak + '</div>' : '') +
+      (metrics.checkmarks > 0 ? '<div class="points-badge" style="background:#E9F2F8;color:#2C5A78;" title="Tasks done">✅ ' + metrics.checkmarks + '</div>' : '');
+  }
+  function progressHtml(person, doneCount, dueCount, dayWord){
     var pct = dueCount ? Math.round(100 * doneCount / dueCount) : 0;
-    var extraBadges = "";
-    if(metrics.checkmarks > 0) extraBadges += '<div class="points-badge" style="background:#E9F2F8;color:#2C5A78;">✅ ' + metrics.checkmarks + '</div>';
-    return '<div class="person-name-row"><button type="button" class="person-name-left" data-open-person-cal="' + person.id + '">' + avatarHtml(person, 44) +
-        '<div class="person-name">' + escapeHtml(person.name) + '</div></button>' +
-        '<div class="points-badge">⭐ <span data-count-perfect>' + metrics.perfectDays + '</span></div>' +
-      '</div>' +
-      (extraBadges ? '<div style="display:flex;gap:6px;flex-wrap:wrap;">' + extraBadges + '</div>' : "") +
-      '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%;background:' + colorVar(person.color) + '"></div></div>' +
+    return '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%;background:' + colorVar(person.color) + '"></div></div>' +
       '<div class="progress-label">' + (dueCount && doneCount === dueCount ? '<span data-count-due>' + dueCount + '</span> of ' + dueCount + ' done — all done! 🎉' : doneCount + ' of ' + dueCount + ' done ' + dayWord) + '</div>';
   }
+  function personColumnHeadHtml(person, metrics, doneCount, dueCount, dayWord){
+    return '<div class="person-name-row"><button type="button" class="person-name-left" data-open-kid="' + person.id + '" title="Open ' + escapeHtml(person.name) + '’s view">' + avatarHtml(person, 44) +
+        '<div class="person-name">' + escapeHtml(person.name) + '</div></button>' +
+        '<button type="button" class="cal-mini-btn" data-open-person-cal="' + person.id + '" title="' + escapeHtml(person.name) + '’s calendar" aria-label="' + escapeHtml(person.name) + '’s calendar">📅</button>' +
+      '</div>' +
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;">' + badgesHtml(person, metrics) + '</div>' +
+      progressHtml(person, doneCount, dueCount, dayWord);
+  }
+  // Reward shelf: display only — no redemption/spending in this pass.
   function goalBoxesHtml(person, metrics){
     var html = "";
     if(person.rewardGoal && person.rewardGoal.target > 0){
-      var allTime = totalPointsAllTime(person.id);
-      var gpct = Math.min(100, Math.round(100*allTime/person.rewardGoal.target));
-      html += '<div class="goal-box"><div class="goal-label">⭐ <span data-count-points>' + allTime + '</span> / ' + person.rewardGoal.target + (person.rewardGoal.description ? " → " + escapeHtml(person.rewardGoal.description) : "") + '</div>' +
-        '<div class="goal-track"><div class="goal-fill" style="width:' + gpct + '%;"></div></div></div>';
+      var allTime = totalPointsAllTime(person.id), target = person.rewardGoal.target;
+      var gpct = Math.min(100, Math.round(100*allTime/target));
+      html += '<div class="shelf"><div class="shelf-star">⭐</div><div class="shelf-main">' +
+        '<div class="shelf-title">' + (person.rewardGoal.description ? escapeHtml(person.rewardGoal.description) : "Reward goal") + '</div>' +
+        '<div class="shelf-pts"><b data-count-points>' + allTime + '</b> / ' + target + ' points' + (allTime >= target ? ' — reached! 🎉' : '') + '</div>' +
+        '<div class="shelf-track"><div class="shelf-fill" style="width:' + gpct + '%;"></div></div>' +
+      '</div></div>';
     }
     if(person.dailyGoal && person.dailyGoal.target > 0){
-      var dgpct = Math.min(100, Math.round(100*metrics.perfectDays/person.dailyGoal.target));
-      html += '<div class="goal-box"><div class="goal-label">🌟 ' + metrics.perfectDays + ' / ' + person.dailyGoal.target + (person.dailyGoal.description ? " → " + escapeHtml(person.dailyGoal.description) : "") + '</div>' +
-        '<div class="goal-track"><div class="goal-fill" style="width:' + dgpct + '%;background:var(--plum);"></div></div></div>';
+      var dTarget = person.dailyGoal.target;
+      var dgpct = Math.min(100, Math.round(100*metrics.perfectDays/dTarget));
+      html += '<div class="shelf daily"><div class="shelf-star">🌟</div><div class="shelf-main">' +
+        '<div class="shelf-title">' + (person.dailyGoal.description ? escapeHtml(person.dailyGoal.description) : "Perfect-day goal") + '</div>' +
+        '<div class="shelf-pts"><b>' + metrics.perfectDays + '</b> / ' + dTarget + ' perfect days' + (metrics.perfectDays >= dTarget ? ' — reached! 🎉' : '') + '</div>' +
+        '<div class="shelf-track"><div class="shelf-fill" style="width:' + dgpct + '%;"></div></div>' +
+      '</div></div>';
     }
     return html;
+  }
+
+  // ---------- Kid view (one person, extra-large) ----------
+  var kidPersonId = null;
+  function openKidView(personId){
+    if(!getPerson(personId)) return;
+    kidPersonId = personId;
+    setView("kid");
+    window.scrollTo(0, 0);
+  }
+  function renderKidView(){
+    var view = document.getElementById("kidView");
+    var person = kidPersonId && getPerson(kidPersonId);
+    if(!person){ view.innerHTML = ""; if(currentView === "kid") setView("chores"); return; }
+    var viewDate = tasklistViewDate, tStr = todayStr(viewDate);
+    var isToday = tStr === todayStr();
+    var due = dueTasksFor(person.id, viewDate, tStr);
+    var doneCount = due.filter(function(t){ return t.completions[tStr]; }).length;
+    var metrics = checkmarkAndPerfectDayCounts(person.id);
+    view.innerHTML =
+      '<div class="kid-top"><button type="button" class="kid-back" id="kidBack">← Back</button>' +
+        '<div class="kid-date">' + (isToday ? "Today" : viewDate.toLocaleDateString(undefined,{weekday:"long", month:"long", day:"numeric"})) + '</div></div>' +
+      '<div class="kid-card" data-person-col="' + person.id + '">' +
+        '<div class="kid-head">' + avatarHtml(person, 88) + '<div class="kid-name">' + escapeHtml(person.name) + '</div>' + badgesHtml(person, metrics) + '</div>' +
+        '<div class="kid-progress">' + progressHtml(person, doneCount, due.length, isToday ? "today" : "that day") + '</div>' +
+        '<div class="chore-list">' + (due.length ? due.map(function(task){ return taskRowHtml(task, !!task.completions[tStr]); }).join("") : '<div class="empty-note" style="font-size:19px;">' + (isToday ? "Nothing to do today! 🎉" : "No tasks that day.") + '</div>') + '</div>' +
+        goalBoxesHtml(person, metrics) +
+      '</div>';
+    document.getElementById("kidBack").addEventListener("click", function(){
+      var pid = kidPersonId;
+      kidPersonId = null;
+      setView("chores");
+      var col = document.querySelector('#choreBoard [data-person-col="' + pid + '"]');
+      if(col){ try{ col.scrollIntoView({ block:"nearest", inline:"center" }); }catch(e){} }
+    });
+    applyZoom();
   }
   function renderChores(){
     var board = document.getElementById("choreBoard");
@@ -929,7 +1053,7 @@
         else if(btn.hasAttribute("data-undo")) undoSkip(btn.getAttribute("data-undo"), dStr);
         else if(btn.hasAttribute("data-add-task")) openTaskModal(btn.getAttribute("data-add-task"));
         else if(btn.hasAttribute("data-open-person-cal")) openPersonCalendarModal(btn.getAttribute("data-open-person-cal"));
-        else if(btn.hasAttribute("data-open-kid") && typeof openKidView === "function") openKidView(btn.getAttribute("data-open-kid"));
+        else if(btn.hasAttribute("data-open-kid")) openKidView(btn.getAttribute("data-open-kid"));
         return;
       }
       var row = e.target.closest("[data-row-task]");
@@ -937,6 +1061,7 @@
     });
   }
   bindTaskContainer(document.getElementById("choreBoard"), function(){ return todayStr(tasklistViewDate); });
+  bindTaskContainer(document.getElementById("kidView"), function(){ return todayStr(tasklistViewDate); });
   document.getElementById("taskPrevDay").addEventListener("click", function(){ tasklistViewDate = addDays(tasklistViewDate, -1); renderChores(); });
   document.getElementById("taskNextDay").addEventListener("click", function(){ tasklistViewDate = addDays(tasklistViewDate, 1); renderChores(); });
   document.getElementById("taskTodayBtn").addEventListener("click", function(){ openDatePickerModal(tasklistViewDate, function(d){ tasklistViewDate = d; renderChores(); }); });
@@ -1944,6 +2069,7 @@
       lastKnownDay = t;
       renderTopDate(); renderChores(); renderCalendar(); renderToday();
       if(currentView === "analytics") renderAnalytics();
+      if(currentView === "kid") renderKidView();
     }
   }
 
@@ -1954,19 +2080,55 @@
     document.getElementById("choresView").style.display = view === "chores" ? "" : "none";
     document.getElementById("calendarView").style.display = view === "calendar" ? "" : "none";
     document.getElementById("analyticsView").style.display = view === "analytics" ? "" : "none";
+    document.getElementById("kidView").style.display = view === "kid" ? "" : "none";
+    document.body.classList.toggle("kid-mode", view === "kid");
+    if(view !== "kid") kidPersonId = null;
     document.getElementById("tabToday").classList.toggle("active", view === "today");
     document.getElementById("tabChores").classList.toggle("active", view === "chores");
     document.getElementById("tabCalendar").classList.toggle("active", view === "calendar");
     document.getElementById("tabAnalytics").classList.toggle("active", view === "analytics");
     if(view === "analytics") renderAnalytics();
     if(view === "today") renderToday();
+    if(view === "kid") renderKidView();
     applyZoom();
   }
   document.getElementById("tabToday").addEventListener("click", function(){ setView("today"); });
   document.getElementById("tabChores").addEventListener("click", function(){ setView("chores"); });
   document.getElementById("tabCalendar").addEventListener("click", function(){ setView("calendar"); });
   document.getElementById("tabAnalytics").addEventListener("click", function(){ setView("analytics"); });
-  document.getElementById("openSettings").addEventListener("click", openSettingsModal);
+  // Settings guard: a 2-second press-and-hold on the gear (a filling ring shows
+  // progress) so stray taps from little hands don't open Settings. Nothing stored.
+  (function(){
+    var gear = document.getElementById("openSettings"), lbl = document.getElementById("gearLbl");
+    var holdTimer = null, hintTimer = null, opened = false;
+    function setLabel(text){ clearTimeout(hintTimer); lbl.textContent = text; }
+    function cancelHold(){
+      if(holdTimer){ clearTimeout(holdTimer); holdTimer = null; setLabel(""); }
+      gear.classList.remove("holding");
+    }
+    function startHold(){
+      if(holdTimer) return;
+      opened = false;
+      gear.classList.remove("holding"); void gear.offsetWidth; gear.classList.add("holding");
+      setLabel("Keep holding…");
+      holdTimer = setTimeout(function(){
+        holdTimer = null; opened = true;
+        gear.classList.remove("holding"); setLabel("");
+        openSettingsModal();
+      }, 2000);
+    }
+    gear.addEventListener("pointerdown", function(e){ if(e.pointerType === "mouse" && e.button !== 0) return; startHold(); });
+    ["pointerup","pointerleave","pointercancel"].forEach(function(evt){ gear.addEventListener(evt, cancelHold); });
+    gear.addEventListener("keydown", function(e){ if((e.key === "Enter" || e.key === " ") && !e.repeat){ e.preventDefault(); startHold(); } });
+    gear.addEventListener("keyup", function(e){ if(e.key === "Enter" || e.key === " ") cancelHold(); });
+    gear.addEventListener("contextmenu", function(e){ e.preventDefault(); });
+    gear.addEventListener("click", function(){
+      if(opened){ opened = false; return; }
+      if(holdTimer) return;
+      setLabel("Hold for 2 seconds");
+      hintTimer = setTimeout(function(){ lbl.textContent = ""; }, 1800);
+    });
+  })();
   document.getElementById("calPrev").addEventListener("click", function(){ calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCalendar(); });
   document.getElementById("calNext").addEventListener("click", function(){ calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCalendar(); });
   document.getElementById("calAddEvent").addEventListener("click", function(){
