@@ -19,7 +19,15 @@
 - [x] **v14 B3** Task quick-add with person preselected, repeat chips and emoji quick-pick strip — *shipped v14*
 - [x] **v14 B4** Big "+ Add" buttons on Today and in the Calendar header — *shipped v14*
 - [x] **v14 D1** Kid view: single-person, extra-large rows, one big Back button — *shipped v14*
-- [x] **v14 D4** Settings guard: 2-second press-and-hold on the gear — *shipped v14*
+- [x] ~~**v14 D4** Settings guard: 2-second press-and-hold on the gear~~ — *shipped v14, removed in v14.1 (menu vanished on release; guard not wanted)*
+
+- [x] **v14.1 Item 1** Option A Tasklist: all people on one row (≥1024px, 2–6 equal columns; 7–10 scroll), snap-scroll strip under 1024px, compact person head — *shipped v14.1*
+- [x] **v14.1 Item 2** Settings opens on a plain tap; press-and-hold removed entirely — *shipped v14.1*
+- [x] **v14.1 Item 3** Size picker removed; the board is fixed at the old "Small" scale (0.9×); stored `zoomIndex` left untouched — *shipped v14.1*
+- [x] **v14.1 Item 4** Tasklist date bar: 7-day week strip, week ‹ ›, date label → month picker, Today pill — *shipped v14.1*
+- [x] **v14.1 Item 5** Home-screen meta tags (app-capable, status bar, title, theme colour) — *shipped v14.1*
+- [ ] Text outside the Tasklist that is 14–15px CSS (weather description/place, Up-next kicker, map links, Calendar weekday headers and event chips, some Analytics labels) renders at ~12.6–13.5px at the fixed 0.9× scale; raise to 16px CSS to restore the 14px floor
+- [ ] Date bar could stay pinned while scrolling long columns; `position: sticky` drifts inside the scaled `#zoomWrapper`, so it needs a different approach
 
 ## Features
 

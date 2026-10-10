@@ -13,10 +13,10 @@ The whole app is a single file, `index.html`, written in vanilla HTML, CSS and J
 ## What it does
 
 - **Today:** current weather, today's events, and a summary of tasks still left.
-- **Tasklist:** a column per person with points, progress, reward and daily goals, and skip-for-today.
+- **Tasklist:** a column per person, all on one row, with points, progress, reward and daily goals, and skip-for-today. A date bar jumps to any day of the week, any date, or back to today.
 - **Calendar:** Event, Birthday, Holiday, Vacation and School Break entries.
 - **Analytics:** week and month stats.
-- **Settings:** up to 10 people, goals, night-dim, location, zoom, and backup/restore.
+- **Settings:** up to 10 people, goals, night-dim, location, and backup/restore.
 
 ## Your data stays in your browser
 

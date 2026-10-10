@@ -1,6 +1,6 @@
 # Design Notes
 
-This describes the current design system as found in `index.html` (v14). It records what exists today and does not propose changes.
+This describes the current design system as found in `index.html` (v14.1). It records what exists today and does not propose changes.
 
 ## Typography
 
@@ -35,16 +35,17 @@ This describes the current design system as found in `index.html` (v14). It reco
 ## Layout and interaction
 
 - **Landscape, touch-first:** built for a wall or kitchen tablet.
-  - There are no `@media` breakpoints.
-  - Grids flex instead: the task board uses `repeat(auto-fit, minmax(210px, 1fr))` and the calendar has 7 columns.
+  - One breakpoint, 1024px, for the task board. At ≥1024px every person is on one row (`grid-auto-flow: column`, equal columns for 2–6 people, 250px minimum and sideways scroll for 7–10). Below 1024px the board is one horizontal snap-scroll strip of 280px (CSS) columns.
+  - A container query on each column moves ✎ × to their own line when a column is narrower than 236px (CSS).
+  - The calendar has 7 columns.
 - **Touch targets:** see *Kid-first floors* below. `touch-action: manipulation` is set.
-- **Zoom:** a zoom setting scales the whole `#zoomWrapper` with a CSS transform.
+- **Scale:** the whole `#zoomWrapper` is scaled to a fixed 0.9× (`BOARD_SCALE`, the old "Small" zoom) with a CSS transform. There is no zoom setting any more. Modals sit outside the wrapper and render at 1×.
 - **Night-dim:** a CSS filter dims the page within a set time window.
 - **Tap guard:** a script for the Documents by Readdle app sends taps to the page so that app's toolbar stays hidden. Tapping the title still shows the toolbar.
 
 ## Kid-first floors (v14)
 
-These are hard minimums at the default "Normal" zoom. Adult guidelines (Apple 44pt, Material 48dp) are floors, not goals. NN/g found that children under 9 need targets of about 2cm × 2cm, so primary actions go bigger.
+These are hard minimums at the **rendered** size. Because the UI renders at 0.9×, CSS sizes inside `#zoomWrapper` must be about 11% larger (50px CSS → 45px on screen; 16px CSS → 14.4px). Adult guidelines (Apple 44pt, Material 48dp) are floors, not goals. NN/g found that children under 9 need targets of about 2cm × 2cm, so primary actions go bigger.
 
 ### Touch targets
 
@@ -57,6 +58,7 @@ These are hard minimums at the default "Normal" zoom. Adult guidelines (Apple 44
 | Big "+ Add" buttons (Today, Calendar) | 56px tall |
 | Day-picker chips, person chips, repeat chips | 44px (day) / 48px (person, repeat), gaps ≥10px |
 | Task rows (Tasklist) | 72px tall, 44px state circle, whole row is the hit area |
+| Tasklist week-strip chips | 52px tall, 44px wide (54 × 47 rendered); week ‹ › 44px |
 | Task rows (kid view) | 80px tall (84px used), 56px circle |
 | Kid view Back button | 56px (60px used) |
 | Text inputs / selects | 48px tall, 17px text |
@@ -78,7 +80,7 @@ Never shrink type to fit more content. Cut content instead.
 - Celebrations never block input. Overlays use `pointer-events: none` and are never awaited.
 - No confirm dialogs for skip or uncheck. Skip offers a 5-second Undo toast instead.
 - A long-press on a task row (550ms) opens the edit sheet, and the click that ends that gesture is swallowed.
-- Settings needs a 2-second press-and-hold on the gear, with a filling ring as feedback.
+- Settings opens on a plain tap of the gear (the v14 press-and-hold was removed in v14.1).
 - Add flows ask for the title only. Everything else has a sensible default, and the rarer fields sit behind "More options".
 
 ### New colour uses (existing palette)

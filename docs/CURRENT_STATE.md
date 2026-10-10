@@ -1,17 +1,61 @@
 # Current State
 
-- **Version:** v14 — kid-first design/interface pass (built on v13)
-- **File:** `index.html`, 136,498 bytes, 2,192 lines (v13 was 105,621 bytes)
-  - sha256 `4c5a29a239aabbfb1b0315737c72854d11fddefcf7de7d43558c6b2147c5175f`
-- **Branch:** `claude/our-week-v14-kid-design-hnpgn4`, merged to `main`
-  - Tier 1 commit `9524cee`, Tier 2 commit `2cffe3c`
-- **Storage:** browser `localStorage`, key `family-board-data-v1` (unchanged). v14 changes **no** saved-data shapes: every item is presentation/interaction only, computed from existing data.
+- **Version:** v14.1 — Option A Tasklist, date bar, Settings + size fixes (built on v14)
+- **File:** `index.html`, 139,385 bytes, 2,230 lines (v14 was 136,498 bytes)
+  - sha256 `45347055ce6f560c8d32127ed053d8d01c519ec7772dc4b62a2a0852124768c7`
+- **Branch:** `claude/family-board-v141-fjir3s`, merged to `main` (fast-forward, as v14 was)
+- **Storage:** browser `localStorage`, key `family-board-data-v1` (unchanged). v14.1 changes **no** saved-data shapes. The stored `zoomIndex` field is still read, defaulted and saved exactly as before; the UI just no longer offers or applies it.
 
-## What changed in v14
+## What changed in v14.1
+
+| Item | Commit | Change |
+|---|---|---|
+| 5 | `df7bee0` | Home-screen meta tags: `apple-mobile-web-app-capable`, `-status-bar-style` (default), `-title` ("Our Week"), `theme-color` `#EEF3ED`. |
+| 2 | `7a17809` | **Settings is a plain tap again.** The v14 2-second hold (D4) opened Settings while held, but it vanished on release. The hold timers, ring, label and handlers are deleted. Settings stays open until Done or a backdrop tap. |
+| 3 | `f0d1523` | **No more size picker.** The 🔍 Small/Normal/Large button is gone and the app always renders at the old "Small" factor (0.9×, `BOARD_SCALE`). `applyZoom()` keeps its wrapper-scaling and min-height layout code. Data with `zoomIndex` 0, 1 or 2 renders identically. |
+| 1 | `20b2c3a` | **Option A Tasklist: everyone on one row.** ≥1024px: one equal-width row for 2–6 people; 7–10 people keep one row and scroll sideways. <1024px: one horizontal snap-scroll strip (~252px columns on screen); columns never stack and the page never scrolls sideways. Width comes from spacing and header chrome (10px gap, 9px list padding, compact head: 40px avatar, ~19px name, ⭐ badge, thin bar, "x of y done"). Very narrow columns (e.g. 6 people at 1024px) move ✎ × onto their own line via a container query. |
+| 4 | `599497f`, `ef2baa5` | **Tasklist date bar** replaces the ‹ day › stepper: a 7-day strip (weekday letter + date; today ringed marigold, viewed day filled sage), ‹ › jump a whole week, the date label ("Saturday, Oct 10 ▾") opens the existing month date-picker, and a Today pill appears whenever the viewed day isn't today. The viewed day is UI state only; checking a task on a past day still writes to that date. On phones the day chips scroll inside the strip. |
+| — | `2b82092` | Calendar and Analytics nav buttons went from 48 to 50px CSS so they still render at ≥44px at 0.9×. |
+
+### Sizing at the fixed 0.9× scale
+
+Everything inside `#zoomWrapper` renders at 0.9× its CSS size (modals are outside it and render at 1×). The Tasklist and date bar are sized so the **rendered** floors hold: 50px CSS → 45px on screen. Measured at 1180×820 with 5 people: columns 218px, rows ≥72px (79.9), circles and buttons ≥44px (44.1), task titles 17.1px, wrapping and never truncated. Week chips are 47×54px, chevrons 45×54px.
+
+## Verification (2026-10-10, v14.1 branch)
+
+Served over http (`python3 -m http.server`) and driven in headless Chromium (Playwright). Test data had 5 people (daily, weekly, monthly, once and range tasks; past completions and skips; reward and perfect-day goals; weekly, monthly and multi-day events) and the long title "Choose and Fill Snack and Fill Water Bottle".
+
+| Check | Result |
+|---|---|
+| 1180×820: all 5 columns on one row at the fixed Small size, none underneath; whole-row tap completes and persists after reload; celebration and skip + Undo still work | PASS |
+| 1024×768 with 6 people, and 1180×820 with 8 people (scrolls in one row): one row, floors hold | PASS |
+| 834×1112: one snap-scroll row (252px columns); page `scrollWidth` = viewport; every column reachable; a touch swipe scrolls and snaps | PASS |
+| 390×844 phone: no sideways page scroll; the week strip scrolls inside itself and keeps the viewed day in view | PASS |
+| Settings: one click or touch tap opens it and it stays open (checked 1.5s later); a name edit persists after Done + reload; backdrop tap closes it; no hold code or markup remains | PASS |
+| No size/zoom control anywhere; `zoomIndex` 0, 1 and 2 render identically at `scale(0.9)` and the stored value is untouched | PASS |
+| Date bar: yesterday's chip shows yesterday's tasks and completions; checking a task while viewing yesterday writes to yesterday and persists after switching tabs and reloading; › advances exactly 7 days; the month popup jumps to a picked date; the Today pill appears off-today and returns in one tap | PASS |
+| Today tab person-row tap jumps to the Tasklist and flashes the right column, at 1180×820 and in the 834×1112 snap strip | PASS |
+| Kid view: opens, completes a task, Back shows the same state; its CSS is unchanged (56px circle, 84px rows) | PASS |
+| v13-shaped dataset (events with `date`, tasks missing `order`/`skippedDates`) loads with nothing lost; after use the saved JSON has no new or removed fields; zero JS/console errors on every tab | PASS |
+| Both `<script>` blocks pass `node --check`; the four meta tags are in `<head>` | PASS |
+| No interactive element renders under 44px on any tab (automated sweep) | PASS |
+
+**Known limits:**
+- Fixing the app at 0.9× means text set at 14–15px CSS outside the Tasklist renders at about 12.6–13.5px: the weather description and place, the Up-next kicker, map links, Calendar weekday headers and event chips, and some Analytics labels. That is under the v14 14px type floor. The Tasklist and date bar meet it. See BACKLOG.
+- Kid view is unchanged in CSS but, like everything, renders at 0.9×. Rows are about 76px and circles about 50px, still above its 72px/44px floors.
+- The date bar is not sticky. `position: sticky` drifts inside the scaled wrapper, so the bar sits as the first row under the tabs instead.
+- `api.open-meteo.com` is blocked by the builder sandbox (weather shows "Tap to retry"). github.io was not checked from the sandbox; Kakashi verifies the live site.
+
+## Previous version: v14
+
+- Tier 1 commit `9524cee`, Tier 2 commit `2cffe3c`, docs `402ebaa` (`claude/our-week-v14-kid-design-hnpgn4`, merged to `main`). 136,498 bytes, sha256 `4c5a29a239aabbfb1b0315737c72854d11fddefcf7de7d43558c6b2147c5175f`.
+- v14 changes **no** saved-data shapes: every item is presentation/interaction only, computed from existing data.
+
+### What changed in v14
 
 The research behind this pass: NN/g child-UX testing (2cm targets for under-9s), and the Skylight, Hearth, Cozyla and DAKboard boards plus kid chore apps (3-field add flows, emoji for pre-readers, a celebration on a finished list).
 
-### Tier 1 — big taps and simple adding
+#### Tier 1 — big taps and simple adding
 
 - **A1 Whole-row tasks:** tap anywhere on a task row to toggle it.
   - Rows are at least 72px tall, with a 44px state circle and 19px titles.
@@ -46,7 +90,7 @@ The research behind this pass: NN/g child-UX testing (2cm targets for under-9s),
   - Titles are at least 16px (19px on the Tasklist, 22px in kid view), and section titles are at least 20px.
   - Analytics chart labels are 14px, and the chart scrolls sideways instead of shrinking.
 
-### Tier 2 — kid view and parent-safe touches
+#### Tier 2 — kid view and parent-safe touches
 
 - **D1 Kid view:** tap a person's avatar or name on the Tasklist to open a single-person view.
   - It has rows at least 80px tall (84px), 22px titles, 56px circles, their badges, progress and goal shelves, and one 60px "← Back".
@@ -57,11 +101,11 @@ The research behind this pass: NN/g child-UX testing (2cm targets for under-9s),
   - Days with nothing due are skipped, and today doesn't break the run while it is still in progress.
   - "🔥 N" shows beside ⭐ when N is 2 or more.
 - **D3 Reward shelf:** the reward-goal box became a shelf card: a big ⭐, the reward as the headline, "points / target" and a thick bar. The perfect-day goal got a matching 🌟 card. It is display only, with no redemption.
-- **D4 Settings guard:** Settings opens only after a 2-second press-and-hold on the gear.
+- **D4 Settings guard** *(removed in v14.1: Settings opens on a plain tap again)*: Settings opened only after a 2-second press-and-hold on the gear.
   - A ring fills and a "Keep holding…" label shows while holding. A short tap shows "Hold for 2 seconds".
   - It works with keyboard Enter/Space held down. Nothing is stored and there is no PIN.
 
-## Verification (2026-10-10, v14 branch)
+#### v14 verification (2026-10-10, v14 branch)
 
 The page was served over http (`python3 -m http.server`) and driven in headless Chromium (Playwright) at 1280×860, plus a 1180×820 touch context.
 
@@ -84,13 +128,7 @@ The page was served over http (`python3 -m http.server`) and driven in headless 
 | Settings: a single tap (mouse and touch) does not open it; a 1s hold shows the ring but does not open; a 2s hold opens it | PASS |
 | Pre-existing v13 data (3 people, daily/weekly/monthly/once/range tasks, weekly/monthly/multi-day events, goals, past completions and skips): everything renders and nothing is lost. The streak (🔥 6) and reward shelf compute without errors, and the saved JSON's structure is unchanged after interacting | PASS |
 
-**Sandbox notes, not app errors:**
-- `api.open-meteo.com` is blocked by the builder sandbox's network policy (`ERR_TUNNEL_CONNECTION_FAILED`). Those are the only console errors, and the weather card shows its "Tap to retry" state.
-- github.io was not checked from the sandbox. Kakashi verifies the live site.
-
-**Known limits:**
-- The 44px floors hold at the default "Normal" zoom. The existing "Small" zoom (0.9×) scales the whole UI, so targets render at about 40px there.
-- Rows were checked at 1180–1280px wide. The Tasklist columns' minimum width went from 210px to 240px, so on narrower screens a 5-person board wraps sooner.
+v14's known limits (sub-44px targets at "Small"; a 5-person board wrapping on narrower screens) are resolved in v14.1.
 
 ## Project rules
 
@@ -98,7 +136,7 @@ The page was served over http (`python3 -m http.server`) and driven in headless 
 - Only one builder works inside Family Board at a time.
 - Agents working here never touch Math Quest repos.
 
-## Previous version
+## Older version: v13
 
 v13 (`60289e9`, 105,621 bytes, sha256 `580735d7…6610e42`) was the owner's upload, committed verbatim and verified on 2026-10-09/10. Its full verification notes are in git history.
 
