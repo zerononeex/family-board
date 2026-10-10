@@ -120,6 +120,22 @@
     .chore-board .person-name-left{ flex-basis: 100%; }
     .chore-board .cal-mini-btn{ margin-left: auto; }
   }
+  /* v15 Layout C — Colour-Wash Columns: Layout A's columns, sizes and snap-scroll, washed in
+     each person's colour (--pc / --pc-tint / --pc-band / --pc-edge are set inline per column). */
+  .chore-board.layout-c .person-col{ background: linear-gradient(var(--pc-tint), var(--pc-tint)), var(--surface); box-shadow: inset 0 0 0 1.5px var(--pc-edge), var(--shadow); }
+  .chore-board.layout-c .person-col.flash{ box-shadow: 0 0 0 4px var(--marigold), var(--shadow); }
+  .chore-board.layout-c .person-head{ background: var(--pc-band); border-bottom: none; }
+  .chore-board.layout-c .progress-track{ background: rgba(255,255,255,0.8); }
+  .chore-board.layout-c .cal-mini-btn{ background: rgba(255,255,255,0.75); }
+  .chore-board.layout-c .chore-list{ gap: 10px; }
+  .chore-board.layout-c .chore-row{ background: var(--surface); border-radius: 20px; box-shadow: 0 1px 0 rgba(31,42,36,0.06), 0 4px 10px rgba(31,42,36,0.06); }
+  .chore-board.layout-c .chore-row:active{ background: var(--pc-band); }
+  .chore-board.layout-c .chore-row.done{ background: rgba(255,255,255,0.55); box-shadow: none; }
+  .chore-board.layout-c .chore-row.skipped-row{ background: transparent; box-shadow: none; border-color: var(--pc-edge); }
+  .chore-board.layout-c .checkbox{ border-color: var(--pc-edge); }
+  .chore-board.layout-c .checkbox.checked{ background: var(--pc); border-color: var(--pc); }
+  .chore-board.layout-c .add-chore-btn{ background: rgba(255,255,255,0.65); border-color: var(--pc-edge); border-radius: 20px; }
+  .chore-board.layout-c .shelf{ border-radius: 20px; }
   /* Tasklist date bar: week strip, week chevrons, date label (opens the date picker), Today pill */
   .date-bar{ display:flex; align-items:center; gap:8px 10px; flex-wrap:wrap; margin-bottom:10px; }
   .wk-strip{ display:flex; align-items:center; gap:4px; background: var(--surface); border-radius: 18px; padding:4px; box-shadow: var(--shadow); max-width:100%; min-width:0; }
@@ -515,7 +531,8 @@
   // never in board data, so backups and imports never carry or change them.
   var UI_KEY = "family-board-ui-v1";
   var LAYOUT_OPTIONS = [
-    ["A","Compact Columns","Everyone side by side"]
+    ["A","Compact Columns","Everyone side by side"],
+    ["C","Colour Columns","Columns in each person's colour"]
   ];
   function uiDefaults(){ return { layout:"A", railPersonId:null, theme:"off" }; }
   function loadUiPrefs(){
@@ -1084,6 +1101,16 @@
       dayWord: isToday ? "today" : "that day"
     };
   }
+  // Person-colour washes (Layouts B, C, D) come from each person's own colour, never
+  // from the theme, so a person keeps the same colour in every theme.
+  function hexToRgba(hex, a){
+    var n = parseInt(hex.slice(1), 16);
+    return "rgba(" + ((n >> 16) & 255) + "," + ((n >> 8) & 255) + "," + (n & 255) + "," + a + ")";
+  }
+  function personStyleAttr(person){
+    var hex = COLOR_HEX[person.color] || COLOR_HEX["--sage-deep"];
+    return ' style="--pc:' + hex + ';--pc-tint:' + hexToRgba(hex, 0.10) + ';--pc-band:' + hexToRgba(hex, 0.24) + ';--pc-edge:' + hexToRgba(hex, 0.45) + ';"';
+  }
   function headHtml(m){ return personColumnHeadHtml(m.person, m.metrics, m.doneCount, m.due.length, m.dayWord); }
   function addTaskBtnHtml(person){ return '<button class="add-chore-btn" data-add-task="' + person.id + '">+ Add task</button>'; }
   // Layout A (and C): one column per person.
@@ -1104,8 +1131,9 @@
     renderDateBar();
 
     var models = state.people.map(function(person){ return personDayModel(person, viewDate, tStr, isToday); });
-    board.className = "chore-board" + (state.people.length > 6 ? " many" : "");
-    board.innerHTML = models.map(function(m){ return personColumnHtml(m); }).join("");
+    var layout = ui.layout;
+    board.className = "chore-board" + (layout === "C" ? " layout-c" : "") + (state.people.length > 6 ? " many" : "");
+    board.innerHTML = models.map(function(m){ return personColumnHtml(m, layout === "C" ? personStyleAttr(m.person) : ""); }).join("");
     applyZoom();
   }
   // One delegated handler per task container: whole-row tap toggles, ✎ edits, × skips
