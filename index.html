@@ -16,6 +16,7 @@
     --marigold: #E8A33D; --marigold-ink: #7A4E12; --sage: #4E7B6D; --sage-deep: #34544A;
     --coral: #E8735F; --plum: #8B5FBF; --teal: #3E9B8C; --sky: #4A90C2; --danger: #C4523F;
     --berry: #B0475A; --olive: #7A8B4E; --indigo: #5A6FB0; --amber: #C98A2B; --slate: #55707A;
+    --cat-event: #34544A; /* calendar "Event" chips: fixed, never themed */
     --radius-lg: 22px; --radius-md: 14px; --radius-sm: 9px;
     --shadow: 0 2px 0 rgba(31,42,36,0.06), 0 10px 24px rgba(31,42,36,0.06);
   }
@@ -432,6 +433,30 @@
   .celebrate-layer span{ position:absolute; font-size:30px; line-height:1; will-change: transform, opacity; }
 
   ::-webkit-scrollbar{ width:0; height:0; }
+
+  /* ---------- v15 seasonal themes ----------
+     <html data-theme="none|halloween|christmas|newyear|valentines|canadaday">. A theme overrides only
+     chrome roles (--bg, --surface-2, --line, --ink-soft, --sage, --sage-deep) plus the --theme-*
+     decoration vars below. Person colours (--coral, --marigold, --teal, --plum, --sky, --berry,
+     --olive, --indigo, --amber, --slate) and --cat-event are never overridden. Decoration is
+     pseudo-element only, so it can never take a tap. */
+  html:not([data-theme="none"]) .topbar{ position:relative; }
+  html:not([data-theme="none"]) .topbar::before{ content:""; position:absolute; left:0; right:0; top:0; height:7px; background: var(--theme-strip); pointer-events:none; }
+  html:not([data-theme="none"]) .brand h1{ color: var(--theme-title); }
+  html:not([data-theme="none"]) .brand h1::after{ content: var(--theme-motif); margin-left:10px; font-size:26px; letter-spacing:3px; pointer-events:none; }
+  html:not([data-theme="none"]) .tabs button.active{ background: var(--theme-tab); }
+  html:not([data-theme="none"]) body{ background-color: var(--bg); background-image: var(--theme-pattern); background-size: var(--theme-pattern-size); }
+
+  /* Halloween: pumpkin + deep plum on a warm light background. */
+  html[data-theme="halloween"]{
+    --bg:#FBF1E6; --surface-2:#FFF6EC; --line:#EFD9C2; --ink-soft:#5E4A55;
+    --sage:#A4460F; --sage-deep:#4B2A5E;
+    --theme-title:#4B2A5E; --theme-tab:#8A3A0C; --theme-motif:"🎃👻";
+    --theme-strip: repeating-linear-gradient(90deg, #E8782A 0 26px, #4B2A5E 26px 52px);
+    --theme-pattern: radial-gradient(circle, rgba(232,120,42,0.10) 2.5px, transparent 3px), radial-gradient(circle, rgba(75,42,94,0.06) 2px, transparent 2.5px);
+    --theme-pattern-size: 46px 46px, 46px 46px;
+  }
+  html[data-theme="halloween"] body{ background-position: 0 0, 23px 23px; }
 </style>
 </head>
 <body>
@@ -523,7 +548,7 @@
     vacation:     { icon:"✈️", label:"Vacation",     tint:"#E9F2F8" },
     school_break: { icon:"📚", label:"School Break", tint:"#F1EBF7" }
   };
-  var CATEGORY_COLOR_VAR = { other:"--sage-deep", birthday:"--coral", holiday:"--marigold", vacation:"--sky", school_break:"--plum" };
+  var CATEGORY_COLOR_VAR = { other:"--cat-event", birthday:"--coral", holiday:"--marigold", vacation:"--sky", school_break:"--plum" };
   var COLOR_HEX = { "--coral":"#E8735F","--marigold":"#E8A33D","--teal":"#3E9B8C","--plum":"#8B5FBF","--sky":"#4A90C2","--sage-deep":"#34544A","--berry":"#B0475A","--olive":"#7A8B4E","--indigo":"#5A6FB0","--amber":"#C98A2B","--slate":"#55707A" };
 
   function uid(){ return Math.random().toString(36).slice(2,10) + Date.now().toString(36); }
@@ -610,6 +635,16 @@
     ["C","Colour Columns","Columns in each person's colour"],
     ["D","People Rail","Pick a person, see their list big"]
   ];
+  // [preference value, badge, title, subtitle]. Theme keys double as the <html data-theme> value.
+  var THEME_OPTIONS = [
+    ["off","○","Off","The normal Our Week look"],
+    ["auto","📅","Auto","Change with the season"],
+    ["halloween","🎃","Halloween",""]
+  ];
+  var THEME_META_COLOR = { none:"#EEF3ED", halloween:"#FBF1E6" };
+  var CELEBRATE_EMOJI_BY_THEME = {
+    halloween: ["🎃","👻","🦇","🍬","🌙","✨"]
+  };
   function uiDefaults(){ return { layout:"A", railPersonId:null, theme:"off" }; }
   function loadUiPrefs(){
     var p = uiDefaults();
@@ -618,7 +653,7 @@
       if(o && typeof o === "object"){
         if(LAYOUT_OPTIONS.some(function(l){ return l[0] === o.layout; })) p.layout = o.layout;
         if(typeof o.railPersonId === "string") p.railPersonId = o.railPersonId;
-        if(typeof o.theme === "string") p.theme = o.theme;
+        if(THEME_OPTIONS.some(function(t){ return t[0] === o.theme; })) p.theme = o.theme;
       }
     }catch(e){}
     return p;
@@ -627,6 +662,35 @@
     try{ localStorage.setItem(UI_KEY, JSON.stringify({ layout: ui.layout, railPersonId: ui.railPersonId, theme: ui.theme })); }catch(e){}
   }
   var ui = loadUiPrefs();
+
+  // ---------- Seasonal themes ----------
+  // Auto windows use the device's LOCAL date (inclusive). Checked in priority order:
+  // New Year (Dec 31–Jan 1), Christmas (Dec 1–26), Canada Day (Jun 25–Jul 1),
+  // Halloween (Oct 1–31), Valentine's (Feb 1–14). Anything else: no theme.
+  function autoThemeForDate(d){
+    var m = d.getMonth() + 1, day = d.getDate();
+    if((m === 12 && day === 31) || (m === 1 && day === 1)) return "newyear";
+    if(m === 12 && day <= 26) return "christmas";
+    if((m === 6 && day >= 25) || (m === 7 && day === 1)) return "canadaday";
+    if(m === 10) return "halloween";
+    if(m === 2 && day <= 14) return "valentines";
+    return "none";
+  }
+  // Preference -> the theme to show. A manual choice always wins over the date.
+  function resolveTheme(pref, date){
+    if(pref === "auto") return autoThemeForDate(date || new Date());
+    if(pref !== "off" && THEME_OPTIONS.some(function(t){ return t[0] === pref; })) return pref;
+    return "none";
+  }
+  window.resolveSeasonalTheme = resolveTheme; // read-only hook so the resolver can be tested against sample dates
+  var activeTheme = "none";
+  function applyTheme(){
+    activeTheme = resolveTheme(ui.theme, new Date());
+    document.documentElement.setAttribute("data-theme", activeTheme);
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if(meta) meta.setAttribute("content", THEME_META_COLOR[activeTheme] || THEME_META_COLOR.none);
+  }
+  applyTheme();
 
   var state = loadData();
   var currentView = "today";
@@ -1050,9 +1114,10 @@
     layer.style.width = r.width + "px"; layer.style.height = Math.min(r.height, window.innerHeight) + "px";
     document.body.appendChild(layer);
     var n = reduce ? 1 : 22;
+    var set = CELEBRATE_EMOJI_BY_THEME[activeTheme] || CELEBRATE_EMOJI;
     for(var i=0;i<n;i++){
       var sp = document.createElement("span");
-      sp.textContent = reduce ? "🎉" : CELEBRATE_EMOJI[i % CELEBRATE_EMOJI.length];
+      sp.textContent = reduce ? (set === CELEBRATE_EMOJI ? "🎉" : set[0]) : set[i % set.length];
       var x = reduce ? r.width/2 - 20 : Math.random() * (r.width - 30);
       var y0 = Math.min(r.height, window.innerHeight) * (reduce ? 0.3 : 0.55 + Math.random()*0.3);
       sp.style.left = x + "px"; sp.style.top = y0 + "px";
@@ -1934,6 +1999,11 @@
       '<span class="opt-text"><span class="opt-title">' + title + '</span>' + (sub ? '<span class="opt-sub">' + sub + '</span>' : '') + '</span>' +
       '<span class="opt-check" aria-hidden="true">✓</span></button>';
   }
+  function autoThemeSubtitle(){
+    var now = autoThemeForDate(new Date());
+    var opt = THEME_OPTIONS.find(function(t){ return t[0] === now; });
+    return "Change with the season" + (opt ? " · now " + opt[1] + " " + opt[2] : " · no theme right now");
+  }
   function markOptRows(root, attr, value){
     root.querySelectorAll("[" + attr + "]").forEach(function(b){
       var on = b.getAttribute(attr) === value;
@@ -2002,6 +2072,10 @@
           '<div class="opt-list" id="sLayoutOpts">' + LAYOUT_OPTIONS.map(function(l){
             return optRowHtml("data-layout-opt", l[0], l[0], l[1], l[2], ui.layout === l[0]);
           }).join("") + '</div>' +
+          '<div class="field" style="margin-top:18px;"><label>Theme</label></div>' +
+          '<div class="opt-list" id="sThemeOpts">' + THEME_OPTIONS.map(function(t){
+            return optRowHtml("data-theme-opt", t[0], t[1], t[2], t[0] === "auto" ? autoThemeSubtitle() : t[3], ui.theme === t[0]);
+          }).join("") + '</div>' +
           '<div class="divider"></div>' +
           '<div class="field"><label>Family members</label></div>' +
           '<div class="backup-row" style="align-items:center;margin-bottom:14px;">' +
@@ -2049,6 +2123,14 @@
           saveUiPrefs();
           markOptRows(root, "data-layout-opt", ui.layout);
           renderChores();
+        });
+      });
+      root.querySelectorAll("[data-theme-opt]").forEach(function(btn){
+        btn.addEventListener("click", function(){
+          ui.theme = this.getAttribute("data-theme-opt");
+          saveUiPrefs();
+          markOptRows(root, "data-theme-opt", ui.theme);
+          applyTheme();
         });
       });
       root.querySelectorAll("[data-person-name]").forEach(function(inp){
@@ -2377,6 +2459,7 @@
     var t = todayStr();
     if(t !== lastKnownDay){
       lastKnownDay = t;
+      applyTheme();
       renderTopDate(); renderChores(); renderCalendar(); renderToday();
       if(currentView === "analytics") renderAnalytics();
       if(currentView === "kid") renderKidView();
@@ -2425,6 +2508,10 @@
   applyZoom();
   checkNightDim();
   window.addEventListener("resize", applyZoom);
+  // An iPad left open across midnight: re-resolve Auto (and catch up the day) on return.
+  document.addEventListener("visibilitychange", function(){
+    if(document.visibilityState === "visible"){ applyTheme(); checkDayRollover(); }
+  });
   setInterval(checkEventAlerts, 15000);
   setInterval(checkDayRollover, 15000);
   setInterval(checkNightDim, 30000);
