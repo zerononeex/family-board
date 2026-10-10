@@ -163,15 +163,6 @@
   .kid-card .shelf-pts{ font-size:17px; }
   .kid-card .shelf-track{ height:18px; }
 
-  /* Settings press-and-hold guard */
-  .gear-btn{ position:relative; touch-action:none; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
-  .hold-ring{ position:absolute; left:50%; top:50%; width:52px; height:52px; margin:-26px 0 0 -26px; transform: rotate(-90deg); pointer-events:none; opacity:0; transition: opacity .15s ease; }
-  .hold-ring circle{ fill:none; stroke: var(--marigold); stroke-width:4; stroke-linecap:round; stroke-dasharray:144.5; stroke-dashoffset:144.5; }
-  .gear-btn.holding .hold-ring{ opacity:1; }
-  .gear-btn.holding .hold-ring circle{ stroke-dashoffset:0; transition: stroke-dashoffset 2s linear; }
-  .hold-lbl{ position:absolute; top:100%; right:0; margin-top:8px; background: var(--ink); color:#fff; font-size:14px; font-weight:700; padding:7px 12px; border-radius:999px; white-space:nowrap; pointer-events:none; z-index:5; }
-  .hold-lbl:empty{ display:none; }
-
   /* Calendar */
   .cal-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom: 14px; flex-wrap:wrap; gap:10px; }
   .cal-header h2{ font-size: 26px; margin:0; color: var(--sage-deep); }
@@ -305,7 +296,7 @@
     </div>
     <div class="topbar-actions">
       <button class="icon-btn" id="zoomToggle" title="Zoom">🔍<span class="lbl" id="zoomLbl">Normal</span></button>
-      <button class="icon-btn gear-btn" id="openSettings" title="Settings — press and hold" aria-label="Settings (press and hold for 2 seconds)"><svg class="hold-ring" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="23"/></svg><span aria-hidden="true">⚙️</span><span class="hold-lbl" id="gearLbl"></span></button>
+      <button class="icon-btn" id="openSettings" title="Settings" aria-label="Settings">⚙️</button>
     </div>
   </div>
 
@@ -2100,39 +2091,7 @@
   document.getElementById("tabChores").addEventListener("click", function(){ setView("chores"); });
   document.getElementById("tabCalendar").addEventListener("click", function(){ setView("calendar"); });
   document.getElementById("tabAnalytics").addEventListener("click", function(){ setView("analytics"); });
-  // Settings guard: a 2-second press-and-hold on the gear (a filling ring shows
-  // progress) so stray taps from little hands don't open Settings. Nothing stored.
-  (function(){
-    var gear = document.getElementById("openSettings"), lbl = document.getElementById("gearLbl");
-    var holdTimer = null, hintTimer = null, opened = false;
-    function setLabel(text){ clearTimeout(hintTimer); lbl.textContent = text; }
-    function cancelHold(){
-      if(holdTimer){ clearTimeout(holdTimer); holdTimer = null; setLabel(""); }
-      gear.classList.remove("holding");
-    }
-    function startHold(){
-      if(holdTimer) return;
-      opened = false;
-      gear.classList.remove("holding"); void gear.offsetWidth; gear.classList.add("holding");
-      setLabel("Keep holding…");
-      holdTimer = setTimeout(function(){
-        holdTimer = null; opened = true;
-        gear.classList.remove("holding"); setLabel("");
-        openSettingsModal();
-      }, 2000);
-    }
-    gear.addEventListener("pointerdown", function(e){ if(e.pointerType === "mouse" && e.button !== 0) return; startHold(); });
-    ["pointerup","pointerleave","pointercancel"].forEach(function(evt){ gear.addEventListener(evt, cancelHold); });
-    gear.addEventListener("keydown", function(e){ if((e.key === "Enter" || e.key === " ") && !e.repeat){ e.preventDefault(); startHold(); } });
-    gear.addEventListener("keyup", function(e){ if(e.key === "Enter" || e.key === " ") cancelHold(); });
-    gear.addEventListener("contextmenu", function(e){ e.preventDefault(); });
-    gear.addEventListener("click", function(){
-      if(opened){ opened = false; return; }
-      if(holdTimer) return;
-      setLabel("Hold for 2 seconds");
-      hintTimer = setTimeout(function(){ lbl.textContent = ""; }, 1800);
-    });
-  })();
+  document.getElementById("openSettings").addEventListener("click", openSettingsModal);
   document.getElementById("calPrev").addEventListener("click", function(){ calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCalendar(); });
   document.getElementById("calNext").addEventListener("click", function(){ calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCalendar(); });
   document.getElementById("calAddEvent").addEventListener("click", function(){
