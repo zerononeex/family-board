@@ -444,6 +444,9 @@
   html:not([data-theme="none"]) .topbar::before{ content:""; position:absolute; left:0; right:0; top:0; height:7px; background: var(--theme-strip); pointer-events:none; }
   html:not([data-theme="none"]) .brand h1{ color: var(--theme-title); }
   html:not([data-theme="none"]) .brand h1::after{ content: var(--theme-motif); margin-left:10px; font-size:26px; letter-spacing:3px; pointer-events:none; }
+  @media (max-width: 1023.98px){
+    html:not([data-theme="none"]) .brand h1::after{ margin-left:6px; font-size:20px; letter-spacing:0; } /* keeps the header on one line on a portrait iPad */
+  }
   html:not([data-theme="none"]) .tabs button.active{ background: var(--theme-tab); }
   html:not([data-theme="none"]) body{ background-color: var(--bg); background-image: var(--theme-pattern); background-size: var(--theme-pattern-size); }
 
