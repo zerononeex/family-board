@@ -117,6 +117,22 @@
     .chore-board .person-name-left{ flex-basis: 100%; }
     .chore-board .cal-mini-btn{ margin-left: auto; }
   }
+  /* Tasklist date bar: week strip, week chevrons, date label (opens the date picker), Today pill */
+  .date-bar{ display:flex; align-items:center; gap:8px 10px; flex-wrap:wrap; margin-bottom:10px; }
+  .wk-strip{ display:flex; align-items:center; gap:4px; background: var(--surface); border-radius: 18px; padding:4px; box-shadow: var(--shadow); }
+  .wk-days{ display:flex; gap:4px; }
+  .wk-nav{ width:50px; height:60px; border-radius:14px; font-size:26px; color: var(--sage-deep); }
+  .wk-nav:active, .wk-chip:active{ background: var(--line); }
+  .wk-chip{ width:52px; min-height:60px; border-radius:14px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; color: var(--ink); }
+  .wk-chip .wk-dow{ font-size:16px; font-weight:700; color: var(--ink-soft); line-height:1.1; }
+  .wk-chip .wk-num{ font-size:21px; font-weight:800; line-height:1.1; }
+  .wk-chip.today{ box-shadow: inset 0 0 0 3px var(--marigold); }
+  .wk-chip.on{ background: var(--sage); color:#fff; }
+  .wk-chip.on .wk-dow{ color:#fff; }
+  .wk-label{ min-height:52px; padding: 0 16px; border-radius:999px; background: var(--surface); box-shadow: var(--shadow); font-family:'Fraunces',serif; font-weight:600; font-size:22px; color: var(--sage-deep); white-space:nowrap; }
+  .wk-label::after{ content:" ▾"; font-family:'Figtree',sans-serif; font-size:16px; color: var(--ink-soft); }
+  .wk-today{ min-height:52px; padding: 0 22px; border-radius:999px; background: var(--sage-deep); color:#fff; font-weight:800; font-size:18px; box-shadow: var(--shadow); }
+  .wk-today[hidden]{ display:none; }
   .person-col{ background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow); display:flex; flex-direction:column; min-height: 360px; overflow:hidden; position:relative; transition: box-shadow .3s ease; }
   .person-col.flash{ box-shadow: 0 0 0 4px var(--marigold), var(--shadow); }
   .person-col.celebrating{ animation: colPop .6s ease; }
@@ -347,13 +363,15 @@
       <div class="today-people" id="todaySummaryList"></div>
     </div>
     <div id="choresView" style="display:none;">
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
-        <div class="cal-nav">
-          <button id="taskPrevDay">‹</button>
-          <button class="today-btn" id="taskTodayBtn" style="min-width:180px;"></button>
-          <button id="taskNextDay">›</button>
+      <div class="date-bar">
+        <div class="wk-strip">
+          <button type="button" class="wk-nav" id="taskPrevWeek" title="Previous week" aria-label="Previous week">‹</button>
+          <div class="wk-days" id="taskWeekDays"></div>
+          <button type="button" class="wk-nav" id="taskNextWeek" title="Next week" aria-label="Next week">›</button>
         </div>
-        <button class="icon-btn" id="toggleSkippedBtn" title="Show/hide skipped tasks" style="color:var(--ink-soft);"></button>
+        <button type="button" class="wk-label" id="taskDateLabel" title="Pick a date"></button>
+        <button type="button" class="wk-today" id="taskTodayPill">Today</button>
+        <button class="icon-btn" id="toggleSkippedBtn" title="Show/hide skipped tasks" style="color:var(--ink-soft);margin-left:auto;"></button>
       </div>
       <div class="chore-board" id="choreBoard"></div>
     </div>
@@ -1014,7 +1032,7 @@
     var viewDate = tasklistViewDate;
     var tStr = todayStr(viewDate);
     var isToday = tStr === todayStr(today);
-    document.getElementById("taskTodayBtn").textContent = isToday ? "Today" : viewDate.toLocaleDateString(undefined,{weekday:"short", month:"short", day:"numeric"});
+    renderDateBar();
 
     board.classList.toggle("many", state.people.length > 6);
     board.innerHTML = state.people.map(function(person){
@@ -1086,9 +1104,29 @@
   }
   bindTaskContainer(document.getElementById("choreBoard"), function(){ return todayStr(tasklistViewDate); });
   bindTaskContainer(document.getElementById("kidView"), function(){ return todayStr(tasklistViewDate); });
-  document.getElementById("taskPrevDay").addEventListener("click", function(){ tasklistViewDate = addDays(tasklistViewDate, -1); renderChores(); });
-  document.getElementById("taskNextDay").addEventListener("click", function(){ tasklistViewDate = addDays(tasklistViewDate, 1); renderChores(); });
-  document.getElementById("taskTodayBtn").addEventListener("click", function(){ openDatePickerModal(tasklistViewDate, function(d){ tasklistViewDate = d; renderChores(); }); });
+  // Date bar: the viewed day is UI state only (tasklistViewDate), never saved.
+  function renderDateBar(){
+    var viewDate = tasklistViewDate, vStr = todayStr(viewDate), tStr = todayStr();
+    var weekStart = addDays(viewDate, -viewDate.getDay());
+    var html = "";
+    for(var i=0;i<7;i++){
+      var d = addDays(weekStart, i), dStr = todayStr(d);
+      html += '<button type="button" class="wk-chip' + (dStr === tStr ? " today" : "") + (dStr === vStr ? " on" : "") + '" data-wk-date="' + dStr + '" aria-label="' + d.toLocaleDateString(undefined,{weekday:"long", month:"long", day:"numeric"}) + '"' + (dStr === vStr ? ' aria-current="date"' : '') + '>' +
+        '<span class="wk-dow">' + DOW_SHORT[i] + '</span><span class="wk-num">' + d.getDate() + '</span></button>';
+    }
+    document.getElementById("taskWeekDays").innerHTML = html;
+    document.getElementById("taskDateLabel").textContent = viewDate.toLocaleDateString(undefined,{weekday:"long", month:"short", day:"numeric"});
+    document.getElementById("taskTodayPill").hidden = vStr === tStr;
+  }
+  function setTasklistDate(d){ tasklistViewDate = d; renderChores(); }
+  document.getElementById("taskWeekDays").addEventListener("click", function(e){
+    var chip = e.target.closest("[data-wk-date]");
+    if(chip) setTasklistDate(parseDate(chip.getAttribute("data-wk-date")));
+  });
+  document.getElementById("taskPrevWeek").addEventListener("click", function(){ setTasklistDate(addDays(tasklistViewDate, -7)); });
+  document.getElementById("taskNextWeek").addEventListener("click", function(){ setTasklistDate(addDays(tasklistViewDate, 7)); });
+  document.getElementById("taskDateLabel").addEventListener("click", function(){ openDatePickerModal(tasklistViewDate, setTasklistDate); });
+  document.getElementById("taskTodayPill").addEventListener("click", function(){ setTasklistDate(new Date()); });
   var EYE_OPEN_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none"><path d="M1.5 12C3.5 7 7.5 4 12 4s8.5 3 10.5 8c-2 5-6 8-10.5 8s-8.5-3-10.5-8Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/></svg>';
   var EYE_OFF_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none"><path d="M1.5 12C3.5 7 7.5 4 12 4s8.5 3 10.5 8c-2 5-6 8-10.5 8s-8.5-3-10.5-8Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M3 3L21 21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
   document.getElementById("toggleSkippedBtn").innerHTML = EYE_OFF_SVG;
