@@ -119,8 +119,9 @@
   }
   /* Tasklist date bar: week strip, week chevrons, date label (opens the date picker), Today pill */
   .date-bar{ display:flex; align-items:center; gap:8px 10px; flex-wrap:wrap; margin-bottom:10px; }
-  .wk-strip{ display:flex; align-items:center; gap:4px; background: var(--surface); border-radius: 18px; padding:4px; box-shadow: var(--shadow); }
-  .wk-days{ display:flex; gap:4px; }
+  .wk-strip{ display:flex; align-items:center; gap:4px; background: var(--surface); border-radius: 18px; padding:4px; box-shadow: var(--shadow); max-width:100%; min-width:0; }
+  .wk-days{ display:flex; gap:4px; min-width:0; overflow-x:auto; }
+  .wk-nav, .wk-chip{ flex-shrink:0; }
   .wk-nav{ width:50px; height:60px; border-radius:14px; font-size:26px; color: var(--sage-deep); }
   .wk-nav:active, .wk-chip:active{ background: var(--line); }
   .wk-chip{ width:52px; min-height:60px; border-radius:14px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; color: var(--ink); }
@@ -1114,7 +1115,13 @@
       html += '<button type="button" class="wk-chip' + (dStr === tStr ? " today" : "") + (dStr === vStr ? " on" : "") + '" data-wk-date="' + dStr + '" aria-label="' + d.toLocaleDateString(undefined,{weekday:"long", month:"long", day:"numeric"}) + '"' + (dStr === vStr ? ' aria-current="date"' : '') + '>' +
         '<span class="wk-dow">' + DOW_SHORT[i] + '</span><span class="wk-num">' + d.getDate() + '</span></button>';
     }
-    document.getElementById("taskWeekDays").innerHTML = html;
+    var days = document.getElementById("taskWeekDays");
+    days.innerHTML = html;
+    // Narrow screens: the strip scrolls, so keep the viewed day's chip in view.
+    if(days.scrollWidth > days.clientWidth){
+      var on = days.querySelector(".wk-chip.on");
+      days.scrollLeft = on.offsetLeft - days.offsetLeft - (days.clientWidth - on.offsetWidth) / 2;
+    }
     document.getElementById("taskDateLabel").textContent = viewDate.toLocaleDateString(undefined,{weekday:"long", month:"short", day:"numeric"});
     document.getElementById("taskTodayPill").hidden = vStr === tStr;
   }
@@ -2151,6 +2158,7 @@
     document.getElementById("tabAnalytics").classList.toggle("active", view === "analytics");
     if(view === "analytics") renderAnalytics();
     if(view === "today") renderToday();
+    if(view === "chores") renderDateBar();
     if(view === "kid") renderKidView();
     applyZoom();
   }
