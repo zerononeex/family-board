@@ -99,20 +99,23 @@
   .chore-board .progress-label{ font-size: 16px; }
   .chore-board .chore-list{ padding: 9px; gap: 8px; }
   .chore-board .person-col{ container-type: inline-size; }
-  .chore-board .chore-row{ grid-template-columns: 49px minmax(0,1fr) auto; column-gap: 8px; min-height: 80px; padding: 10px 2px 4px 8px; }
+  .chore-board .chore-row{ grid-template-columns: 49px minmax(0,1fr) auto; column-gap: 8px; min-height: 80px; padding: 6px 2px 6px 8px; }
+  .chore-board .chore-acts{ flex-direction: column; }
   .chore-board .chore-row.skipped-row{ padding: 8px 4px 8px 12px; }
   .chore-board .checkbox{ width: 49px; height: 49px; }
   .chore-board .checkbox svg{ width: 27px; height: 27px; }
-  .chore-board .chore-points{ font-size: 16px; white-space: nowrap; }
   .chore-board .chore-del{ width: 49px; height: 49px; min-width: 49px; }
   .chore-board .empty-note{ font-size: 16px; }
   .chore-board .add-chore-btn{ margin: 4px 9px 10px 9px; min-height: 62px; font-size: 18px; }
   .chore-board .shelf{ margin: 0 9px 10px 9px; }
   .chore-board .shelf-pts{ font-size: 16px; }
-  /* Very narrow columns (e.g. 6 people at 1024px): ✎ × drop to their own line. */
+  /* Wide columns: ✎ × side by side. Very narrow columns (e.g. 6 people at 1024px): ✎ × drop to their own line. */
+  @container (min-width: 360px){
+    .chore-board .chore-acts{ flex-direction: row; }
+  }
   @container (max-width: 235px){
-    .chore-board .chore-row{ grid-template-columns: 49px minmax(0,1fr); grid-template-areas: "check title" "check pts" "acts acts"; }
-    .chore-board .chore-acts{ justify-content: flex-end; }
+    .chore-board .chore-row{ grid-template-columns: 49px minmax(0,1fr); grid-template-areas: "check title" "acts acts"; padding: 10px 2px 4px 8px; }
+    .chore-board .chore-acts{ flex-direction: row; justify-content: flex-end; }
     .chore-board .person-name-row{ flex-wrap: wrap; }
     .chore-board .person-name-left{ flex-basis: 100%; }
     .chore-board .cal-mini-btn{ margin-left: auto; }
@@ -147,16 +150,15 @@
   .progress-fill{ height:100%; border-radius:999px; transition: width .3s ease; }
   .progress-label{ font-size:15px; color: var(--ink-soft); font-weight:600; }
   .chore-list{ flex:1; padding: 10px 12px 12px 12px; display:flex; flex-direction:column; gap:8px; }
-  .chore-row{ display:grid; grid-template-columns: 44px minmax(0,1fr) auto; grid-template-areas: "check title title" "check pts acts"; align-items:center; column-gap:12px; row-gap:2px; min-height:72px; padding: 10px 6px 4px 12px; border-radius: var(--radius-md); background: var(--surface-2); transition: background .15s ease; cursor:pointer; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
+  .chore-row{ display:grid; grid-template-columns: 44px minmax(0,1fr) auto; grid-template-areas: "check title acts"; align-items:center; column-gap:12px; row-gap:2px; min-height:72px; padding: 6px 6px 6px 12px; border-radius: var(--radius-md); background: var(--surface-2); transition: background .15s ease; cursor:pointer; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
   .chore-row:active{ background: var(--line); }
   .chore-row.done{ background: transparent; }
-  .chore-row.done .chore-title, .chore-row.done .chore-points{ opacity:0.55; }
+  .chore-row.done .chore-title{ opacity:0.55; }
   .checkbox{ grid-area: check; width:44px;height:44px; border-radius:50%; border: 3px solid var(--line); flex-shrink:0; display:flex;align-items:center;justify-content:center; background:#fff; transition: all .15s ease; }
   .checkbox.checked{ background: var(--sage-deep); border-color: var(--sage-deep); }
   .checkbox svg{ width:24px;height:24px; opacity:0; transition: opacity .1s; }
   .checkbox.checked svg{ opacity:1; }
   .chore-title{ grid-area: title; font-size:19px; font-weight:600; line-height:1.25; overflow-wrap:anywhere; padding-right:6px; }
-  .chore-points{ grid-area: pts; font-size:14px; font-weight:800; color: var(--marigold-ink); }
   .chore-acts{ grid-area: acts; display:flex; }
   .chore-row.done .chore-title{ text-decoration: line-through; text-decoration-color: var(--ink-soft); }
   .chore-row.skipped-row{ display:flex; cursor:default; opacity:0.6; border:1.5px dashed var(--line); padding: 8px 6px 8px 14px; }
@@ -202,12 +204,11 @@
   .kid-progress .progress-track{ height:18px; }
   .kid-progress .progress-label{ font-size:19px; font-weight:700; }
   .kid-card .chore-list{ padding: 14px 16px; gap:12px; }
-  .kid-card .chore-row{ grid-template-columns: 56px minmax(0,1fr) auto auto; grid-template-areas: "check title pts acts"; min-height:84px; padding: 12px 8px 12px 16px; column-gap:16px; }
+  .kid-card .chore-row{ grid-template-columns: 56px minmax(0,1fr) auto; grid-template-areas: "check title acts"; min-height:84px; padding: 12px 8px 12px 16px; column-gap:16px; }
   .kid-card .chore-row.skipped-row{ display:flex; }
   .kid-card .checkbox{ width:56px; height:56px; }
   .kid-card .checkbox svg{ width:30px; height:30px; }
   .kid-card .chore-title{ font-size:22px; }
-  .kid-card .chore-points{ font-size:17px; }
   .kid-card .shelf{ margin: 0 16px 16px 16px; padding: 18px; }
   .kid-card .shelf-star{ font-size:52px; }
   .kid-card .shelf-title{ font-size:24px; }
@@ -811,7 +812,6 @@
     return '<div class="chore-row' + (done ? " done" : "") + '" data-row-task="' + task.id + '" role="button" aria-pressed="' + (done ? "true" : "false") + '">' +
       '<div class="checkbox' + (done ? " checked" : "") + '">' + CHECK_SVG + '</div>' +
       '<div class="chore-title">' + escapeHtml(task.title) + '</div>' +
-      '<div class="chore-points">+' + (task.points||1) + ' ⭐</div>' +
       '<div class="chore-acts">' +
         '<button class="chore-del" data-edit="' + task.id + '" title="Edit task" aria-label="Edit task">✎</button>' +
         '<button class="chore-del" data-del="' + task.id + '" title="Skip just for this day" aria-label="Skip for this day">×</button>' +
