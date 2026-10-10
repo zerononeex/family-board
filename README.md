@@ -8,7 +8,7 @@ The whole app is a single file, `index.html`, written in vanilla HTML, CSS and J
 
 **https://zerononeex.github.io/family-board/** (GitHub Pages, served from `main`, root folder)
 
-> Status: GitHub Pages is **not enabled yet**. See [docs/CURRENT_STATE.md](docs/CURRENT_STATE.md).
+> Status: GitHub Pages is **enabled and live** (verified 2026-10-09). See [docs/CURRENT_STATE.md](docs/CURRENT_STATE.md).
 
 ## What it does
 
