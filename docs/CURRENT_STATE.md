@@ -1,10 +1,75 @@
 # Current State
 
-- **Version:** v14.2 — micro-fix on v14.1: the per-row "+N ⭐" label is removed from task rows (Tasklist and Kid View; display only, commit `f5242ec`). Titles now centre on the check circle with ✎ × at the right (stacked in board columns, which makes board rows ~99px instead of ~80px on screen). Points data and every points total are unchanged. Verified at 1180×820, 834×1112 and 1024×768 (6 people): no row points text, floors hold, long titles wrap fully, completion persists, header/shelf totals still rise, skipped rows and Kid View fine, v14.1 data loads byte-identical, zero errors.
-- **File:** `index.html`, 139,257 bytes, 2,230 lines (v14.1 was 139,385 bytes)
-  - sha256 `e7494117049a697b08b586388528406657900a6187e1b5e488803ba292152d9e`
-- **Branch:** `claude/family-board-v141-fjir3s`, merged to `main` (fast-forward, as v14 was)
-- **Storage:** browser `localStorage`, key `family-board-data-v1` (unchanged). v14.1 changes **no** saved-data shapes. The stored `zoomIndex` field is still read, defaulted and saved exactly as before; the UI just no longer offers or applies it.
+- **Version:** v15 — combined release: **four switchable Tasklist layouts** and **five seasonal themes** for the whole app. Defaults (Layout A, theme Off) render pixel-identical to v14.2 on every tab and in Kid View.
+- **File:** `index.html`, 165,258 bytes, 2,625 lines (v14.2 was 139,257 bytes)
+  - sha256 `e3ea3ac501e9de464c083846e02bdaf2dd88b7fa56df141d75e66590a7e95095`
+- **Branch:** `claude/family-board-v15-yzn8zg`, merged to `main` (fast-forward, as earlier releases were)
+- **Board data:** `localStorage` key `family-board-data-v1`, **unchanged** — no new fields, no shape changes. Export/import work exactly as before.
+- **UI preferences (new):** a separate key, `family-board-ui-v1`, holds `{"layout":"A","railPersonId":null,"theme":"off"}`.
+  - `layout`: `"A"`, `"B"`, `"C"` or `"D"`. `railPersonId`: the person selected in Layout D (or `null`). `theme`: `"off"`, `"auto"`, `"halloween"`, `"christmas"`, `"newyear"`, `"valentines"` or `"canadaday"`.
+  - A missing, unreadable or partial key falls back to those defaults field by field. The key is only written when a choice is made.
+  - It is per-device. It never goes into a backup file, and importing a backup never changes it.
+
+## What changed in v15
+
+| Stage | Commit | Change |
+|---|---|---|
+| a | `5411b67` | UI-prefs key with defaults; Settings → **Tasklist layout** section; `renderChores` rebuilt on shared helpers (`personDayModel`, `personColumnHeadHtml`, `taskRowHtml`, `skippedRowHtml`, `goalBoxesHtml`, `addTaskBtnHtml`) so every layout uses the same header, rows and actions. |
+| b1 | `426f33f` | **Layout C — Colour Columns**: A's columns, washed in each person's colour. |
+| b2 | `1dd987b` | **Layout B — Family Rows**: one full-width band per person; Today-tab jump made layout-aware. |
+| b3 | `8651882` | **Layout D — People Rail**: person rail + one big list; `railPersonId` saved in the UI key. |
+| c | `bec40cc` | Theme engine (`<html data-theme>`), Settings → **Theme** section, Auto by date, themed celebration emoji, **Halloween**. |
+| d | `67668c1` | **Christmas**, **New Year** (header-only fireworks, off under reduced motion), **Valentine's**, **Canada Day**. |
+| e | `1bd04f8` | Portrait-iPad fix: the themed title motif shrinks below 1024px so the header stays on one line. |
+
+All four layouts and all five themes shipped; nothing was held back.
+
+## Verification (2026-10-10, v15 branch)
+
+Served over http and driven in headless Chromium (Playwright). Test data: 5 people (daily and weekly tasks, past completions, a skipped task, reward and perfect-day goals, events) including "Choose and Fill Snack and Fill Water Bottle".
+
+**Layouts**
+
+| Check | Result |
+|---|---|
+| Fresh load with no `family-board-ui-v1`: Layout A, `data-theme="none"`, key not written. Screenshots of Today, Tasklist, Calendar, Analytics and Kid View are **byte-identical** to v14.2 at 1180×820 and 834×1112 | PASS |
+| Settings shows A/B/C/D (60px rows); switching re-renders behind the sheet at once and survives reload | PASS |
+| Item 3 parity suite (24 checks) in **each** layout at 1180×820 **and** 834×1112: whole-row tap completes and persists after reload; skip + 5s Undo toast; show/hide skipped and ↺ un-skip; viewing yesterday and back-filling a checkmark writes yesterday; "+ Add task" pre-selects the person and the task appears; long-press opens edit without toggling; ✎ edits; 100% celebration fires (and flashes the rail entry in D) and a tap 60ms later still registers; switching layouts keeps the viewed date, theme and data byte-identical; zero errors | PASS (96/96 + 96/96) |
+| Rendered floors at 0.9× (min across the board): circles 44.1 (A/C), 46.8 (B), 50.4 (D); rows/tiles 99 (A/C), 106 (B), 82.8 (D); buttons ≥44.1; titles 17.1px (D 19.8px); nothing truncated; page `scrollWidth` = viewport in every layout at both sizes (A/C keep their snap strip in portrait) | PASS |
+| Today-tab person jump: A/C scroll the column into view and flash it; B scrolls the band to the top and flashes it; D selects the person in the rail (saved) and flashes their list | PASS |
+| Kid View unchanged (pixel-identical with defaults; same interactions) | PASS |
+
+**Themes**
+
+| Check | Result |
+|---|---|
+| Settings shows Off, Auto and the five themes; each manual theme applies immediately and persists after reload; body, Today, Tasklist, Calendar, Analytics, Kid View and the Settings sheet all pick it up | PASS |
+| Every theme checked at 1180×820 in Layout A; Halloween and Christmas run through the full parity suite in B, C and D; all 4 layouts × 7 theme preferences render, and switching one never resets the other | PASS |
+| Auto resolver (`window.resolveSeasonalTheme(pref, date)`): Oct 15 → halloween, Dec 25 → christmas, Dec 31 / Jan 1 → newyear, Feb 14 → valentines, Jul 1 → canadaday, Mar 15 → none, plus window edges (Dec 1/26/27, Jun 24/25, Sep 30, Oct 31, Feb 1/15, Jan 2). "Off" → none on every date; manual Christmas → christmas on every date | PASS |
+| Auto on the device date (Oct 10) → Halloween; manual Christmas on that date stays Christmas | PASS |
+| Person colours (`--coral` … `--slate`) and the calendar Event colour are identical in every theme; task titles stay `#1F2A24` at 19px; strip, motif and fireworks have `pointer-events: none`; night-dim still sets `brightness(0.55)` in every theme | PASS |
+| Contrast: every themed text role (soft text on bg/surfaces, headings, white on accent buttons, tabs and day chip) is at least as high as the base theme's (automated WCAG ratio check) | PASS |
+| New Year fireworks run only on `.topbar::after` (7s fade); with `prefers-reduced-motion: reduce` the computed animation is `none` | PASS |
+| Celebration emoji: Halloween 🎃👻🦇🍬🌙✨, Christmas 🎄🎅🎁❄️⛄🔔, Off → the previous set | PASS |
+
+**Data + technical safety**
+
+| Check | Result |
+|---|---|
+| Export: the JSON equals board data and has no `layout`, `railPersonId` or `theme`. Import of that file: layout and theme unchanged | PASS |
+| Parsed `family-board-data-v1` deep-diffed before/after 28 layout/theme switches: no new keys, no changed values (byte-identical) | PASS |
+| v14.2-shaped data and v13-shaped data (old `chores`, events with `date`) load with nothing lost; a garbage or partial UI key (`{"layout":"Z","theme":"purple"}`, `{"layout":"D"}`) falls back to defaults field by field; zero console errors | PASS |
+| Both `<script>` blocks pass `node --check` | PASS |
+| Network: only the page, Google Fonts and Open-Meteo are requested; no new files, fonts, images or libraries | PASS |
+
+**Known limits:**
+- On a portrait iPad (834px) a themed header has only ~10px to spare once the title motif is added. It fits on one line with the real fonts in Chromium. If iPad emoji render a little wider, the ⚙️ button would drop to a second header line; nothing breaks.
+- The midnight re-check of Auto runs on the existing 15s day-rollover timer and when the app becomes visible again. It was checked through the date resolver, not by changing the device clock.
+- Earlier known limits (sub-14px text outside the Tasklist at 0.9×, non-sticky date bar) are unchanged.
+
+## Previous version: v14.2
+
+- Micro-fix on v14.1 (commit `f5242ec`, docs `0e5db21`): the per-row "+N ⭐" label was removed from task rows. 139,257 bytes, sha256 `e7494117049a697b08b586388528406657900a6187e1b5e488803ba292152d9e`.
 
 ## What changed in v14.1
 
@@ -142,4 +207,4 @@ v13 (`60289e9`, 105,621 bytes, sha256 `580735d7…6610e42`) was the owner's uplo
 
 ## Next step
 
-Kakashi verifies the live site and the byte-level diff. Further ideas go in [BACKLOG.md](BACKLOG.md).
+Kakashi verifies the live site after the v15 merge. Further ideas go in [BACKLOG.md](BACKLOG.md).
