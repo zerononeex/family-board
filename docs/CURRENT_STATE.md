@@ -1,8 +1,8 @@
 # Current State
 
-- **Version:** v14.1 — Option A Tasklist, date bar, Settings + size fixes (built on v14)
-- **File:** `index.html`, 139,385 bytes, 2,230 lines (v14 was 136,498 bytes)
-  - sha256 `45347055ce6f560c8d32127ed053d8d01c519ec7772dc4b62a2a0852124768c7`
+- **Version:** v14.2 — micro-fix on v14.1: the per-row "+N ⭐" label is removed from task rows (Tasklist and Kid View; display only, commit `f5242ec`). Titles now centre on the check circle with ✎ × at the right (stacked in board columns, which makes board rows ~99px instead of ~80px on screen). Points data and every points total are unchanged. Verified at 1180×820, 834×1112 and 1024×768 (6 people): no row points text, floors hold, long titles wrap fully, completion persists, header/shelf totals still rise, skipped rows and Kid View fine, v14.1 data loads byte-identical, zero errors.
+- **File:** `index.html`, 139,257 bytes, 2,230 lines (v14.1 was 139,385 bytes)
+  - sha256 `e7494117049a697b08b586388528406657900a6187e1b5e488803ba292152d9e`
 - **Branch:** `claude/family-board-v141-fjir3s`, merged to `main` (fast-forward, as v14 was)
 - **Storage:** browser `localStorage`, key `family-board-data-v1` (unchanged). v14.1 changes **no** saved-data shapes. The stored `zoomIndex` field is still read, defaulted and saved exactly as before; the UI just no longer offers or applies it.
 

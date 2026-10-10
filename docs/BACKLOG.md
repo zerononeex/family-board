@@ -26,6 +26,7 @@
 - [x] **v14.1 Item 3** Size picker removed; the board is fixed at the old "Small" scale (0.9×); stored `zoomIndex` left untouched — *shipped v14.1*
 - [x] **v14.1 Item 4** Tasklist date bar: 7-day week strip, week ‹ ›, date label → month picker, Today pill — *shipped v14.1*
 - [x] **v14.1 Item 5** Home-screen meta tags (app-capable, status bar, title, theme colour) — *shipped v14.1*
+- [x] **v14.2** Remove the "+N ⭐" points label from every task row (Tasklist + Kid View); points still count everywhere else — *shipped v14.2*
 - [ ] Text outside the Tasklist that is 14–15px CSS (weather description/place, Up-next kicker, map links, Calendar weekday headers and event chips, some Analytics labels) renders at ~12.6–13.5px at the fixed 0.9× scale; raise to 16px CSS to restore the 14px floor
 - [ ] Date bar could stay pinned while scrolling long columns; `position: sticky` drifts inside the scaled `#zoomWrapper`, so it needs a different approach
 
