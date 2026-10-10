@@ -294,6 +294,18 @@
   .day-event-del{ color: var(--ink-soft); font-size:18px; width:44px; height:44px; min-width:44px; flex-shrink:0; border-radius:50%; display:flex; align-items:center; justify-content:center; }
   .day-event-del:active{ background: var(--line); }
   .backup-row{ display:flex; gap:10px; }
+  /* Settings: Tasklist layout / Theme option rows (whole row is the target) */
+  .opt-list{ display:flex; flex-direction:column; gap:8px; margin-bottom:6px; }
+  .opt-row{ display:flex; align-items:center; gap:14px; width:100%; min-height:60px; padding: 8px 14px; border-radius: var(--radius-md); background: var(--surface-2); border: 2px solid var(--line); text-align:left; color: var(--ink); }
+  .opt-row:active{ background: var(--line); }
+  .opt-row.on{ border-color: var(--sage-deep); background: var(--surface); box-shadow: inset 0 0 0 1px var(--sage-deep); }
+  .opt-badge{ width:40px; height:40px; border-radius:12px; background: var(--surface); border:1.5px solid var(--line); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:19px; color: var(--sage-deep); flex-shrink:0; }
+  .opt-row.on .opt-badge{ background: var(--sage-deep); border-color: var(--sage-deep); color:#fff; }
+  .opt-text{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+  .opt-title{ font-weight:800; font-size:17px; }
+  .opt-sub{ font-weight:600; font-size:15px; color: var(--ink-soft); }
+  .opt-check{ width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:18px; color:#fff; background: var(--sage-deep); flex-shrink:0; visibility:hidden; }
+  .opt-row.on .opt-check{ visibility:visible; }
   .goal-settings-row{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
   .goal-settings-row .gname{ width:100px; flex-shrink:0; font-weight:700; font-size:15px; }
   .goal-settings-row input[type=number]{ width:84px; min-height:48px; font-size:16px; padding:9px; border-radius:var(--radius-sm); border:1.5px solid var(--line); background:var(--surface-2); }
@@ -498,6 +510,30 @@
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
     catch(e){ alert("Couldn't save — storage may be full (this can happen with too many large photos)."); }
   }
+
+  // UI preferences (layout, People Rail selection, theme) live in their own key and
+  // never in board data, so backups and imports never carry or change them.
+  var UI_KEY = "family-board-ui-v1";
+  var LAYOUT_OPTIONS = [
+    ["A","Compact Columns","Everyone side by side"]
+  ];
+  function uiDefaults(){ return { layout:"A", railPersonId:null, theme:"off" }; }
+  function loadUiPrefs(){
+    var p = uiDefaults();
+    try{
+      var o = JSON.parse(localStorage.getItem(UI_KEY) || "null");
+      if(o && typeof o === "object"){
+        if(LAYOUT_OPTIONS.some(function(l){ return l[0] === o.layout; })) p.layout = o.layout;
+        if(typeof o.railPersonId === "string") p.railPersonId = o.railPersonId;
+        if(typeof o.theme === "string") p.theme = o.theme;
+      }
+    }catch(e){}
+    return p;
+  }
+  function saveUiPrefs(){
+    try{ localStorage.setItem(UI_KEY, JSON.stringify({ layout: ui.layout, railPersonId: ui.railPersonId, theme: ui.theme })); }catch(e){}
+  }
+  var ui = loadUiPrefs();
 
   var state = loadData();
   var currentView = "today";
@@ -1027,6 +1063,38 @@
     });
     applyZoom();
   }
+  // Shared Tasklist pieces: every layout builds a person's header, task rows, goal
+  // shelves and "+ Add task" from these, so behaviour can't drift between layouts.
+  function personDayModel(person, viewDate, tStr, isToday){
+    var allDue = state.tasks.filter(function(t){ return t.personId === person.id && t.createdDate <= tStr && isDueOn(t, viewDate); })
+      .sort(function(a,b){ return (a.order||0) - (b.order||0); });
+    var due = allDue.filter(function(t){ return !(t.skippedDates && t.skippedDates[tStr]); });
+    var skipped = allDue.filter(function(t){ return t.skippedDates && t.skippedDates[tStr]; });
+    var listHtml;
+    if(due.length === 0 && (!showSkipped || skipped.length === 0)){
+      listHtml = '<div class="empty-note">' + (isToday ? "No tasks due today." : "No tasks were due that day.") + '</div>';
+    } else {
+      listHtml = due.map(function(task){ return taskRowHtml(task, !!task.completions[tStr]); }).join("") +
+        (showSkipped ? skipped.map(skippedRowHtml).join("") : "");
+    }
+    return {
+      person: person, due: due, listHtml: listHtml,
+      doneCount: due.filter(function(t){ return t.completions[tStr]; }).length,
+      metrics: checkmarkAndPerfectDayCounts(person.id),
+      dayWord: isToday ? "today" : "that day"
+    };
+  }
+  function headHtml(m){ return personColumnHeadHtml(m.person, m.metrics, m.doneCount, m.due.length, m.dayWord); }
+  function addTaskBtnHtml(person){ return '<button class="add-chore-btn" data-add-task="' + person.id + '">+ Add task</button>'; }
+  // Layout A (and C): one column per person.
+  function personColumnHtml(m, extraAttrs){
+    return '<div class="person-col" data-person-col="' + m.person.id + '"' + (extraAttrs || "") + '>' +
+      '<div class="person-head">' + headHtml(m) + '</div>' +
+      '<div class="chore-list">' + m.listHtml + '</div>' +
+      goalBoxesHtml(m.person, m.metrics) +
+      addTaskBtnHtml(m.person) +
+    '</div>';
+  }
   function renderChores(){
     var board = document.getElementById("choreBoard");
     var today = new Date();
@@ -1035,28 +1103,9 @@
     var isToday = tStr === todayStr(today);
     renderDateBar();
 
-    board.classList.toggle("many", state.people.length > 6);
-    board.innerHTML = state.people.map(function(person){
-      var allDue = state.tasks.filter(function(t){ return t.personId === person.id && t.createdDate <= tStr && isDueOn(t, viewDate); })
-        .sort(function(a,b){ return (a.order||0) - (b.order||0); });
-      var due = allDue.filter(function(t){ return !(t.skippedDates && t.skippedDates[tStr]); });
-      var skipped = allDue.filter(function(t){ return t.skippedDates && t.skippedDates[tStr]; });
-      var doneCount = due.filter(function(t){ return t.completions[tStr]; }).length;
-      var metrics = checkmarkAndPerfectDayCounts(person.id);
-      var listHtml;
-      if(due.length === 0 && (!showSkipped || skipped.length === 0)){
-        listHtml = '<div class="empty-note">' + (isToday ? "No tasks due today." : "No tasks were due that day.") + '</div>';
-      } else {
-        listHtml = due.map(function(task){ return taskRowHtml(task, !!task.completions[tStr]); }).join("") +
-          (showSkipped ? skipped.map(skippedRowHtml).join("") : "");
-      }
-      return '<div class="person-col" data-person-col="' + person.id + '">' +
-        '<div class="person-head">' + personColumnHeadHtml(person, metrics, doneCount, due.length, isToday ? "today" : "that day") + '</div>' +
-        '<div class="chore-list">' + listHtml + '</div>' +
-        goalBoxesHtml(person, metrics) +
-        '<button class="add-chore-btn" data-add-task="' + person.id + '">+ Add task</button>' +
-      '</div>';
-    }).join("");
+    var models = state.people.map(function(person){ return personDayModel(person, viewDate, tStr, isToday); });
+    board.className = "chore-board" + (state.people.length > 6 ? " many" : "");
+    board.innerHTML = models.map(function(m){ return personColumnHtml(m); }).join("");
     applyZoom();
   }
   // One delegated handler per task container: whole-row tap toggles, ✎ edits, × skips
@@ -1716,6 +1765,20 @@
     reader.readAsDataURL(file);
   }
 
+  function optRowHtml(attr, value, badge, title, sub, on){
+    return '<button type="button" class="opt-row' + (on ? " on" : "") + '" ' + attr + '="' + value + '" aria-pressed="' + (on ? "true" : "false") + '">' +
+      '<span class="opt-badge">' + badge + '</span>' +
+      '<span class="opt-text"><span class="opt-title">' + title + '</span>' + (sub ? '<span class="opt-sub">' + sub + '</span>' : '') + '</span>' +
+      '<span class="opt-check" aria-hidden="true">✓</span></button>';
+  }
+  function markOptRows(root, attr, value){
+    root.querySelectorAll("[" + attr + "]").forEach(function(b){
+      var on = b.getAttribute(attr) === value;
+      b.classList.toggle("on", on);
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+  }
+
   function openSettingsModal(){
     var root = document.getElementById("modalRoot");
 
@@ -1772,6 +1835,11 @@
       root.innerHTML =
         '<div class="modal-backdrop" id="sBackdrop"><div class="modal">' +
           '<h3>Settings</h3>' +
+          '<div class="field"><label>Tasklist layout</label></div>' +
+          '<div class="opt-list" id="sLayoutOpts">' + LAYOUT_OPTIONS.map(function(l){
+            return optRowHtml("data-layout-opt", l[0], l[0], l[1], l[2], ui.layout === l[0]);
+          }).join("") + '</div>' +
+          '<div class="divider"></div>' +
           '<div class="field"><label>Family members</label></div>' +
           '<div class="backup-row" style="align-items:center;margin-bottom:14px;">' +
             '<button class="btn btn-secondary" id="sPeopleMinus" style="flex:0 0 auto;width:56px;font-size:22px;">−</button>' +
@@ -1810,6 +1878,16 @@
           '<div class="modal-actions"><button class="btn btn-primary" id="sDone">Done</button></div>' +
         '</div></div>';
 
+      // Layout / theme rows: save to the UI key, apply at once, mark the row in place
+      // (no rebuild, so the sheet keeps its scroll position).
+      root.querySelectorAll("[data-layout-opt]").forEach(function(btn){
+        btn.addEventListener("click", function(){
+          ui.layout = this.getAttribute("data-layout-opt");
+          saveUiPrefs();
+          markOptRows(root, "data-layout-opt", ui.layout);
+          renderChores();
+        });
+      });
       root.querySelectorAll("[data-person-name]").forEach(function(inp){
         inp.addEventListener("input", function(){ var p = getPerson(this.getAttribute("data-person-name")); if(p){ p.name = this.value; saveData(); } });
       });
