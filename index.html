@@ -167,6 +167,49 @@
     .fr-band{ grid-template-columns: minmax(0,1fr); }
     .fr-band .person-head{ border-right:none; border-bottom:1px solid var(--line); }
   }
+  /* v15 Layout D — People Rail + Big List: a ~300px rail of people; the selected person's list
+     uses Kid View's row scale (84px rows, 56px circle) but keeps ✎ × (52px -> 47 rendered). */
+  .people-rail{ display:grid; grid-template-columns: 300px minmax(0,1fr); gap:14px; align-items:start; padding: 5px 5px 10px 5px; }
+  .pr-rail{ display:flex; flex-direction:column; gap:10px; min-width:0; }
+  .pr-entry{ display:flex; align-items:center; gap:12px; width:100%; min-height:88px; padding: 12px 14px; background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow); text-align:left; border: 3px solid transparent; transition: box-shadow .3s ease, border-color .15s ease; }
+  .pr-entry:active{ transform: scale(0.98); }
+  .pr-entry.on{ border-color: var(--pc); background: linear-gradient(var(--pc-tint), var(--pc-tint)), var(--surface); }
+  .pr-entry.flash{ box-shadow: 0 0 0 4px var(--marigold), var(--shadow); }
+  .pr-entry-main{ flex:1; min-width:0; display:flex; flex-direction:column; gap:6px; }
+  .pr-entry-top{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .pr-entry-name{ font-family:'Fraunces',serif; font-weight:600; font-size:22px; line-height:1.15; overflow-wrap:anywhere; margin-right:auto; }
+  .pr-entry-badges{ display:flex; gap:4px; flex-wrap:wrap; }
+  .pr-entry .points-badge{ font-size:16px; padding: 3px 8px; }
+  .pr-entry-prog{ display:flex; flex-direction:column; gap:4px; }
+  .pr-entry .progress-track{ height:10px; background: var(--line); }
+  .pr-entry .progress-label{ font-size:16px; }
+  .pr-main{ min-height: 0; }
+  .pr-main .person-head{ padding: 18px 20px 16px 20px; background: var(--pc-tint); }
+  .pr-main .person-name-left{ gap: 14px; }
+  .pr-main .person-name{ font-size: 30px; }
+  .pr-main .cal-mini-btn{ width: 54px; height: 54px; background: var(--surface); }
+  .pr-main .points-badge{ font-size: 17px; padding: 5px 12px; }
+  .pr-main .progress-track{ height: 16px; background: var(--surface); }
+  .pr-main .progress-label{ font-size: 19px; font-weight: 700; }
+  .pr-main .chore-list{ padding: 14px 16px; gap: 12px; }
+  .pr-main .chore-row{ grid-template-columns: 56px minmax(0,1fr) auto; min-height: 92px; padding: 12px 8px 12px 16px; column-gap: 16px; }
+  .pr-main .checkbox{ width: 56px; height: 56px; }
+  .pr-main .checkbox svg{ width: 30px; height: 30px; }
+  .pr-main .chore-title{ font-size: 22px; }
+  .pr-main .chore-acts{ gap: 6px; }
+  .pr-main .chore-del{ width: 52px; height: 52px; min-width: 52px; font-size: 21px; }
+  .pr-main .empty-note{ font-size: 19px; }
+  .pr-main .shelf{ margin: 0 16px 14px 16px; }
+  .pr-main .shelf-pts{ font-size: 16px; }
+  .pr-main .add-chore-btn{ margin: 4px 16px 16px 16px; min-height: 64px; font-size: 19px; }
+  @media (max-width: 1023.98px){
+    .people-rail{ grid-template-columns: minmax(0,1fr); gap: 10px; }
+    .pr-rail{ flex-direction: row; overflow-x: auto; overscroll-behavior-x: contain; padding: 4px 4px 6px 4px; }
+    .pr-entry{ width:auto; flex: 0 0 auto; min-height: 64px; padding: 6px 16px 6px 8px; border-radius: 999px; }
+    .pr-entry-name{ white-space: nowrap; overflow-wrap: normal; }
+    .pr-entry-badges .points-badge + .points-badge, .pr-entry .progress-label{ display:none; }
+    .pr-entry-prog{ width: 110px; }
+  }
   /* Tasklist date bar: week strip, week chevrons, date label (opens the date picker), Today pill */
   .date-bar{ display:flex; align-items:center; gap:8px 10px; flex-wrap:wrap; margin-bottom:10px; }
   .wk-strip{ display:flex; align-items:center; gap:4px; background: var(--surface); border-radius: 18px; padding:4px; box-shadow: var(--shadow); max-width:100%; min-width:0; }
@@ -564,7 +607,8 @@
   var LAYOUT_OPTIONS = [
     ["A","Compact Columns","Everyone side by side"],
     ["B","Family Rows","One wide row per person"],
-    ["C","Colour Columns","Columns in each person's colour"]
+    ["C","Colour Columns","Columns in each person's colour"],
+    ["D","People Rail","Pick a person, see their list big"]
   ];
   function uiDefaults(){ return { layout:"A", railPersonId:null, theme:"off" }; }
   function loadUiPrefs(){
@@ -1025,6 +1069,11 @@
     }
     setTimeout(function(){ if(layer.parentNode) layer.parentNode.removeChild(layer); }, 1900);
     col.classList.remove("celebrating"); void col.offsetWidth; col.classList.add("celebrating");
+    // People Rail (Layout D): also flash the person's rail entry.
+    document.querySelectorAll('#choreBoard [data-rail-select="' + personId + '"]').forEach(function(el){
+      el.classList.add("flash");
+      setTimeout(function(){ el.classList.remove("flash"); }, 1600);
+    });
     // Count the progress / points up.
     var dueCount = col.querySelector("[data-count-due]");
     if(dueCount) countUp(dueCount, 0, parseInt(dueCount.textContent, 10) || 0, 700);
@@ -1169,6 +1218,26 @@
       '</div>' +
     '</div>';
   }
+  // Layout D: People Rail. The selected person is a UI preference (railPersonId);
+  // a missing or stale id falls back to the first person.
+  function railSelectedModel(models){
+    return models.find(function(m){ return m.person.id === ui.railPersonId; }) || models[0] || null;
+  }
+  function railEntryHtml(m, on){
+    return '<button type="button" class="pr-entry' + (on ? " on" : "") + '" data-rail-select="' + m.person.id + '" role="tab" aria-selected="' + (on ? "true" : "false") + '"' + personStyleAttr(m.person) + '>' +
+      avatarHtml(m.person, 48) +
+      '<span class="pr-entry-main">' +
+        '<span class="pr-entry-top"><span class="pr-entry-name">' + escapeHtml(m.person.name) + '</span>' +
+          '<span class="pr-entry-badges">' + badgesHtml(m.person, m.metrics) + '</span></span>' +
+        '<span class="pr-entry-prog">' + progressHtml(m.person, m.doneCount, m.due.length, m.dayWord) + '</span>' +
+      '</span></button>';
+  }
+  function selectRailPerson(personId){
+    if(!getPerson(personId)) return;
+    ui.railPersonId = personId;
+    saveUiPrefs();
+    renderChores();
+  }
   function renderChores(){
     var board = document.getElementById("choreBoard");
     var today = new Date();
@@ -1182,6 +1251,19 @@
     if(layout === "B"){
       board.className = "family-rows";
       board.innerHTML = models.map(familyBandHtml).join("");
+    } else if(layout === "D"){
+      var sel = railSelectedModel(models);
+      board.className = "people-rail";
+      board.innerHTML =
+        '<div class="pr-rail" role="tablist" aria-label="People">' + models.map(function(m){ return railEntryHtml(m, m === sel); }).join("") + '</div>' +
+        (sel ? '<div class="person-col pr-main" data-person-col="' + sel.person.id + '"' + personStyleAttr(sel.person) + '>' +
+          '<div class="person-head">' + headHtml(sel) + '</div>' +
+          '<div class="chore-list">' + sel.listHtml + '</div>' +
+          goalBoxesHtml(sel.person, sel.metrics) +
+          addTaskBtnHtml(sel.person) +
+        '</div>' : '');
+      var onChip = board.querySelector(".pr-entry.on");
+      if(onChip){ var rail = onChip.parentNode; if(rail.scrollWidth > rail.clientWidth) rail.scrollLeft = onChip.offsetLeft - rail.offsetLeft - (rail.clientWidth - onChip.offsetWidth) / 2; }
     } else {
       board.className = "chore-board" + (layout === "C" ? " layout-c" : "") + (state.people.length > 6 ? " many" : "");
       board.innerHTML = models.map(function(m){ return personColumnHtml(m, layout === "C" ? personStyleAttr(m.person) : ""); }).join("");
@@ -1218,9 +1300,10 @@
     container.addEventListener("click", function(e){
       if(suppressClick){ suppressClick = false; return; }
       var dStr = getDateStr();
-      var btn = e.target.closest("[data-edit],[data-del],[data-undo],[data-add-task],[data-open-person-cal],[data-open-kid]");
+      var btn = e.target.closest("[data-edit],[data-del],[data-undo],[data-add-task],[data-open-person-cal],[data-open-kid],[data-rail-select]");
       if(btn){
-        if(btn.hasAttribute("data-edit")){ var t = findTask(btn.getAttribute("data-edit")); if(t) openTaskModal(t.personId, t); }
+        if(btn.hasAttribute("data-rail-select")) selectRailPerson(btn.getAttribute("data-rail-select"));
+        else if(btn.hasAttribute("data-edit")){ var t = findTask(btn.getAttribute("data-edit")); if(t) openTaskModal(t.personId, t); }
         else if(btn.hasAttribute("data-del")) skipTask(btn.getAttribute("data-del"), dStr);
         else if(btn.hasAttribute("data-undo")) undoSkip(btn.getAttribute("data-undo"), dStr);
         else if(btn.hasAttribute("data-add-task")) openTaskModal(btn.getAttribute("data-add-task"));
