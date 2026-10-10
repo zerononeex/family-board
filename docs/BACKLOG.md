@@ -29,6 +29,8 @@
 - [x] **v14.2** Remove the "+N ⭐" points label from every task row (Tasklist + Kid View); points still count everywhere else — *shipped v14.2*
 - [x] **v15 Items 1–4** Four switchable Tasklist layouts (A Compact Columns, B Family Rows, C Colour Columns, D People Rail) with shared rendering, saved per device in `family-board-ui-v1` — *shipped v15*
 - [x] **v15 Items 5–9** Seasonal themes for the whole app (Halloween, Christmas, New Year, Valentine's, Canada Day), Off/Auto/manual, themed celebrations — *shipped v15*
+- [x] **v15.1** Person names never wrap or split mid-word (one line everywhere; font shrinks to a 15px floor, ellipsis only past it) — *shipped v15.1*
+- [ ] Very long names (about 15+ characters) in narrow 5-person columns at 1180px reach the 15px floor and end in an ellipsis; a nickname/short display name could avoid that if it ever matters
 - [ ] Portrait iPad: a themed header has only ~10px to spare; if emoji render wider on a device, shorten the motif to one emoji below 1024px
 - [ ] Optional: Kid View "Back" in Layout D could select that person in the rail
 - [ ] Text outside the Tasklist that is 14–15px CSS (weather description/place, Up-next kicker, map links, Calendar weekday headers and event chips, some Analytics labels) renders at ~12.6–13.5px at the fixed 0.9× scale; raise to 16px CSS to restore the 14px floor

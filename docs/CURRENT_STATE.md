@@ -1,11 +1,40 @@
 # Current State
 
-- **Version:** v15 — combined release: **four switchable Tasklist layouts** and **five seasonal themes** for the whole app. Defaults (Layout A, theme Off) render pixel-identical to v14.2 on every tab and in Kid View.
-- **File:** `index.html`, 165,258 bytes, 2,625 lines (v14.2 was 139,257 bytes)
-  - sha256 `e3ea3ac501e9de464c083846e02bdaf2dd88b7fa56df141d75e66590a7e95095`
-- **Branch:** `claude/family-board-v15-yzn8zg`, merged to `main` (fast-forward, as earlier releases were)
-- **Board data:** `localStorage` key `family-board-data-v1`, **unchanged** — no new fields, no shape changes. Export/import work exactly as before.
-- **UI preferences (new):** a separate key, `family-board-ui-v1`, holds `{"layout":"A","railPersonId":null,"theme":"off"}`.
+- **Version:** v15.1 — micro-fix on v15: **person names always stay on one line.** On the family's iPad, "Alexander" split mid-word in the Tasklist column header ("Alexande" / "r"). Commit `2aad340`.
+- **File:** `index.html`, 166,805 bytes, 2,654 lines (v15 was 165,258 bytes)
+  - sha256 `2a8da704bcb092650faea44f575a254e566964247c2ecd8279fa21ac6dd0d290`
+- **Branch:** `claude/family-board-v15-yzn8zg` (this session's assigned branch, continued from `main`), merged to `main` (fast-forward)
+- **Storage:** unchanged. `family-board-data-v1` and `family-board-ui-v1` are read and written exactly as in v15. The fix is display-only and never changes a stored name.
+
+## What changed in v15.1
+
+- **Root cause:** `.person-name` (the shared header used by every layout) had `overflow-wrap: break-word` and no `white-space: nowrap`. In a narrow column the name shares its row with the 44px avatar and the 50px 📅 button, so a long name was squeezed and broken mid-word. The rail name (`.pr-entry-name`) had the same problem through `overflow-wrap: anywhere`.
+- **Fix:**
+  - `.person-name`, `.pr-entry-name`, `.kid-name` and `.tp-name` are now `white-space: nowrap`, and every mid-word breaking rule is gone.
+  - After every render, and on view change, resize and font load, `fitNames()` checks each visible name. If it is wider than its box, the font steps down 1px at a time to a **15px floor** (CSS px).
+  - The line height is pinned first, so a shrunk name never changes the header's height.
+  - Only if a name still doesn't fit at 15px does it get the `name-clip` class (overflow hidden + ellipsis).
+  - Names that already fit are untouched, so they render pixel-identical to v15.
+
+### Verification (2026-10-10, v15.1)
+
+Headless Chromium with the real Google Fonts (Fraunces) loaded.
+
+| Check | Result |
+|---|---|
+| Reproduced on v15: "Alexander" wraps to 2 lines in Layout A at 1180×820 (5 people) | confirmed |
+| "Alexander" with 5 people, Layouts A and C, 1180×820 and 834×1112: one line (20px at 1180, 21px at 834), no overlap with 📅 | PASS |
+| Stress names at 834×1112 in A and C: "Christopher" 21px, "Alexandria-Rose" 16px, "Maximilian-Alexander" (20 chars) reaches the 15px floor and ends in an ellipsis. All are one line and none break mid-word. (At 1180×820, where 5 columns are narrower, "Christopher" fits at 16px, and "Alexandria-Rose" and the 20-char name end in an ellipsis at 15px.) | PASS |
+| Layouts B and D (main panel + rail), Kid View and the Today rows, with "Alexander" and the stress names, at both sizes: every name on one line. The only ellipsis is the 20-char name in B's 300px identity block at 1180 | PASS |
+| Header heights uniform across people in every layout (A 141, C 140, D panel 169, D rail entries 113 / 59, Today rows 101; B name rows 47). v15 had 141/185 headers with long names. Name tap target 45–47px and still opens Kid View | PASS |
+| Nothing else moved: with normal names, screenshots of every tab + Kid View are pixel-identical to v15 in Layouts A, B, C, D and with Christmas/C and New Year/D (reduced motion, so the fireworks don't animate) at both sizes | PASS |
+| v15 parity suite 24/24 in each layout; the v15 combined checklist 53/53 (data byte-identical, export/import, themes, network); both `<script>` blocks pass `node --check`; zero console errors | PASS |
+
+## Previous version: v15
+
+- v15 (head `1fede88`): four switchable Tasklist layouts and five seasonal themes. 165,258 bytes, sha256 `e3ea3ac501e9de464c083846e02bdaf2dd88b7fa56df141d75e66590a7e95095`. Details follow.
+- **Board data:** `localStorage` key `family-board-data-v1`, **unchanged** since v14 — no new fields, no shape changes. Export/import work exactly as before.
+- **UI preferences (v15):** a separate key, `family-board-ui-v1`, holds `{"layout":"A","railPersonId":null,"theme":"off"}`.
   - `layout`: `"A"`, `"B"`, `"C"` or `"D"`. `railPersonId`: the person selected in Layout D (or `null`). `theme`: `"off"`, `"auto"`, `"halloween"`, `"christmas"`, `"newyear"`, `"valentines"` or `"canadaday"`.
   - A missing, unreadable or partial key falls back to those defaults field by field. The key is only written when a choice is made.
   - It is per-device. It never goes into a backup file, and importing a backup never changes it.
