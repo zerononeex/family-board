@@ -81,7 +81,42 @@
   .tp-go{ font-size:28px; color: var(--ink-soft); flex-shrink:0; }
 
   /* Tasklist */
-  .chore-board{ display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; overflow-x:auto; padding-bottom: 8px; }
+  /* v14.1 Option A: every person on ONE row. The UI renders at 0.9x (BOARD_SCALE),
+     so board sizes below are set so the RENDERED floors hold (50px -> 45px etc). */
+  .chore-board{ display:grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 10px; overflow-x:auto; overflow-y:hidden; padding: 5px 5px 10px 5px; align-items:start; }
+  .chore-board.many{ grid-auto-columns: minmax(250px, 1fr); }
+  @media (max-width: 1023.98px){
+    .chore-board, .chore-board.many{ grid-auto-columns: 280px; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scroll-padding: 0 5px; }
+    .chore-board .person-col{ scroll-snap-align: start; }
+  }
+  .chore-board .person-head{ padding: 13px 12px 12px 12px; gap: 8px; }
+  .chore-board .person-name-row{ gap: 6px; }
+  .chore-board .person-name-left{ gap: 8px; min-height: 50px; flex: 1; min-width: 0; }
+  .chore-board .person-name{ font-size: 21px; line-height: 1.15; overflow-wrap: break-word; min-width: 0; }
+  .chore-board .cal-mini-btn{ width: 50px; height: 50px; }
+  .chore-board .points-badge{ font-size: 16px; padding: 4px 9px; }
+  .chore-board .progress-track{ height: 11px; }
+  .chore-board .progress-label{ font-size: 16px; }
+  .chore-board .chore-list{ padding: 9px; gap: 8px; }
+  .chore-board .person-col{ container-type: inline-size; }
+  .chore-board .chore-row{ grid-template-columns: 49px minmax(0,1fr) auto; column-gap: 8px; min-height: 80px; padding: 10px 2px 4px 8px; }
+  .chore-board .chore-row.skipped-row{ padding: 8px 4px 8px 12px; }
+  .chore-board .checkbox{ width: 49px; height: 49px; }
+  .chore-board .checkbox svg{ width: 27px; height: 27px; }
+  .chore-board .chore-points{ font-size: 16px; white-space: nowrap; }
+  .chore-board .chore-del{ width: 49px; height: 49px; min-width: 49px; }
+  .chore-board .empty-note{ font-size: 16px; }
+  .chore-board .add-chore-btn{ margin: 4px 9px 10px 9px; min-height: 62px; font-size: 18px; }
+  .chore-board .shelf{ margin: 0 9px 10px 9px; }
+  .chore-board .shelf-pts{ font-size: 16px; }
+  /* Very narrow columns (e.g. 6 people at 1024px): ✎ × drop to their own line. */
+  @container (max-width: 235px){
+    .chore-board .chore-row{ grid-template-columns: 49px minmax(0,1fr); grid-template-areas: "check title" "check pts" "acts acts"; }
+    .chore-board .chore-acts{ justify-content: flex-end; }
+    .chore-board .person-name-row{ flex-wrap: wrap; }
+    .chore-board .person-name-left{ flex-basis: 100%; }
+    .chore-board .cal-mini-btn{ margin-left: auto; }
+  }
   .person-col{ background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow); display:flex; flex-direction:column; min-height: 360px; overflow:hidden; position:relative; transition: box-shadow .3s ease; }
   .person-col.flash{ box-shadow: 0 0 0 4px var(--marigold), var(--shadow); }
   .person-col.celebrating{ animation: colPop .6s ease; }
@@ -767,7 +802,7 @@
   function skippedRowHtml(task){
     return '<div class="chore-row skipped-row">' +
       '<div class="chore-title" style="text-decoration:line-through;flex:1;">' + escapeHtml(task.title) + '</div>' +
-      '<div style="font-size:14px;color:var(--ink-soft);font-weight:700;white-space:nowrap;">Skipped</div>' +
+      '<div style="font-size:16px;color:var(--ink-soft);font-weight:700;white-space:nowrap;">Skipped</div>' +
       '<button class="chore-del" data-undo="' + task.id + '" title="Undo skip" aria-label="Undo skip">↺</button>' +
     '</div>';
   }
@@ -981,6 +1016,7 @@
     var isToday = tStr === todayStr(today);
     document.getElementById("taskTodayBtn").textContent = isToday ? "Today" : viewDate.toLocaleDateString(undefined,{weekday:"short", month:"short", day:"numeric"});
 
+    board.classList.toggle("many", state.people.length > 6);
     board.innerHTML = state.people.map(function(person){
       var allDue = state.tasks.filter(function(t){ return t.personId === person.id && t.createdDate <= tStr && isDueOn(t, viewDate); })
         .sort(function(a,b){ return (a.order||0) - (b.order||0); });
