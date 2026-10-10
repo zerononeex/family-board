@@ -136,6 +136,37 @@
   .chore-board.layout-c .checkbox.checked{ background: var(--pc); border-color: var(--pc); }
   .chore-board.layout-c .add-chore-btn{ background: rgba(255,255,255,0.65); border-color: var(--pc-edge); border-radius: 20px; }
   .chore-board.layout-c .shelf{ border-radius: 20px; }
+  /* v15 Layout B — Family Rows: one full-width band per person; tasks are big wrapping tiles.
+     Sizes are CSS px at the fixed 0.9x scale (52px circle -> 47, 96px tile -> 86, 50px buttons -> 45). */
+  .family-rows{ display:flex; flex-direction:column; gap:14px; padding: 5px 5px 10px 5px; }
+  .fr-band{ display:grid; grid-template-columns: 300px minmax(0,1fr); background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow); border-left: 8px solid var(--pc); overflow:hidden; position:relative; transition: box-shadow .3s ease; }
+  .fr-band.flash{ box-shadow: 0 0 0 4px var(--marigold), var(--shadow); }
+  .fr-band.celebrating{ animation: colPop .6s ease; }
+  .fr-band .person-head{ border-bottom:none; border-right:1px solid var(--line); background: var(--pc-tint); padding: 14px 14px 16px 14px; gap: 9px; }
+  .fr-band .person-name-left{ gap: 10px; min-height: 52px; flex: 1; min-width: 0; }
+  .fr-band .person-name{ font-size: 23px; line-height: 1.15; overflow-wrap: break-word; min-width: 0; }
+  .fr-band .cal-mini-btn{ width: 52px; height: 52px; background: var(--surface); }
+  .fr-band .points-badge{ font-size: 16px; padding: 4px 10px; }
+  .fr-band .progress-track{ height: 14px; background: var(--surface); }
+  .fr-band .progress-label{ font-size: 17px; }
+  .fr-body{ min-width:0; padding: 12px; display:flex; flex-direction:column; gap:12px; }
+  .fr-tiles{ display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+  .fr-tiles .chore-row{ grid-template-columns: 52px minmax(0,1fr) auto; column-gap: 10px; min-height: 96px; padding: 8px 4px 8px 12px; border: 1.5px solid var(--line); }
+  .fr-tiles .chore-row.done{ border-color: transparent; background: var(--surface-2); }
+  .fr-tiles .chore-acts{ flex-direction: column; }
+  .fr-tiles .checkbox{ width: 52px; height: 52px; }
+  .fr-tiles .checkbox svg{ width: 28px; height: 28px; }
+  .fr-tiles .chore-del{ width: 50px; height: 50px; min-width: 50px; }
+  .fr-tiles .chore-row.skipped-row{ padding: 8px 4px 8px 14px; }
+  .fr-tiles .empty-note{ grid-column: 1 / -1; font-size: 17px; padding: 18px 12px; }
+  .fr-extras{ display:flex; flex-wrap:wrap; gap:10px; align-items:stretch; }
+  .fr-extras .shelf{ margin:0; flex: 1 1 280px; }
+  .fr-extras .shelf-pts{ font-size: 16px; }
+  .fr-extras .add-chore-btn{ margin:0; flex: 1 1 220px; min-height: 64px; font-size: 18px; }
+  @media (max-width: 1023.98px){
+    .fr-band{ grid-template-columns: minmax(0,1fr); }
+    .fr-band .person-head{ border-right:none; border-bottom:1px solid var(--line); }
+  }
   /* Tasklist date bar: week strip, week chevrons, date label (opens the date picker), Today pill */
   .date-bar{ display:flex; align-items:center; gap:8px 10px; flex-wrap:wrap; margin-bottom:10px; }
   .wk-strip{ display:flex; align-items:center; gap:4px; background: var(--surface); border-radius: 18px; padding:4px; box-shadow: var(--shadow); max-width:100%; min-width:0; }
@@ -532,6 +563,7 @@
   var UI_KEY = "family-board-ui-v1";
   var LAYOUT_OPTIONS = [
     ["A","Compact Columns","Everyone side by side"],
+    ["B","Family Rows","One wide row per person"],
     ["C","Colour Columns","Columns in each person's colour"]
   ];
   function uiDefaults(){ return { layout:"A", railPersonId:null, theme:"off" }; }
@@ -759,13 +791,17 @@
       btn.addEventListener("click", function(){ jumpToPersonColumn(this.getAttribute("data-today-person")); });
     });
   }
+  // A/C: scroll the person's column into view and flash it; B: their band;
+  // D: select them in the People Rail and flash their big list.
   function jumpToPersonColumn(personId){
     tasklistViewDate = new Date();
+    if(ui.layout === "D" && getPerson(personId)){ ui.railPersonId = personId; saveUiPrefs(); }
     setView("chores");
     renderChores();
     var col = document.querySelector('#choreBoard [data-person-col="' + personId + '"]');
     if(!col) return;
-    try{ col.scrollIntoView({ behavior:"smooth", block:"center", inline:"center" }); }catch(e){ col.scrollIntoView(); }
+    var block = ui.layout === "A" || ui.layout === "C" ? "center" : "start";
+    try{ col.scrollIntoView({ behavior:"smooth", block:block, inline:"center" }); }catch(e){ col.scrollIntoView(); }
     col.classList.add("flash");
     setTimeout(function(){ col.classList.remove("flash"); }, 2200);
   }
@@ -1122,6 +1158,17 @@
       addTaskBtnHtml(m.person) +
     '</div>';
   }
+  // Layout B: one full-width band per person — identity block, wrapping task tiles,
+  // then the goal shelves and "+ Add task".
+  function familyBandHtml(m){
+    return '<div class="fr-band" data-person-col="' + m.person.id + '"' + personStyleAttr(m.person) + '>' +
+      '<div class="person-head">' + headHtml(m) + '</div>' +
+      '<div class="fr-body">' +
+        '<div class="fr-tiles">' + m.listHtml + '</div>' +
+        '<div class="fr-extras">' + goalBoxesHtml(m.person, m.metrics) + addTaskBtnHtml(m.person) + '</div>' +
+      '</div>' +
+    '</div>';
+  }
   function renderChores(){
     var board = document.getElementById("choreBoard");
     var today = new Date();
@@ -1132,8 +1179,13 @@
 
     var models = state.people.map(function(person){ return personDayModel(person, viewDate, tStr, isToday); });
     var layout = ui.layout;
-    board.className = "chore-board" + (layout === "C" ? " layout-c" : "") + (state.people.length > 6 ? " many" : "");
-    board.innerHTML = models.map(function(m){ return personColumnHtml(m, layout === "C" ? personStyleAttr(m.person) : ""); }).join("");
+    if(layout === "B"){
+      board.className = "family-rows";
+      board.innerHTML = models.map(familyBandHtml).join("");
+    } else {
+      board.className = "chore-board" + (layout === "C" ? " layout-c" : "") + (state.people.length > 6 ? " many" : "");
+      board.innerHTML = models.map(function(m){ return personColumnHtml(m, layout === "C" ? personStyleAttr(m.person) : ""); }).join("");
+    }
     applyZoom();
   }
   // One delegated handler per task container: whole-row tap toggles, ✎ edits, × skips
