@@ -93,7 +93,7 @@
   .chore-board .person-head{ padding: 13px 12px 12px 12px; gap: 8px; }
   .chore-board .person-name-row{ gap: 6px; }
   .chore-board .person-name-left{ gap: 8px; min-height: 50px; flex: 1; min-width: 0; }
-  .chore-board .person-name{ font-size: 21px; line-height: 1.15; overflow-wrap: break-word; min-width: 0; }
+  .chore-board .person-name{ font-size: 21px; line-height: 1.15; min-width: 0; }
   .chore-board .cal-mini-btn{ width: 50px; height: 50px; }
   .chore-board .points-badge{ font-size: 16px; padding: 4px 9px; }
   .chore-board .progress-track{ height: 11px; }
@@ -145,7 +145,7 @@
   .fr-band.celebrating{ animation: colPop .6s ease; }
   .fr-band .person-head{ border-bottom:none; border-right:1px solid var(--line); background: var(--pc-tint); padding: 14px 14px 16px 14px; gap: 9px; }
   .fr-band .person-name-left{ gap: 10px; min-height: 52px; flex: 1; min-width: 0; }
-  .fr-band .person-name{ font-size: 23px; line-height: 1.15; overflow-wrap: break-word; min-width: 0; }
+  .fr-band .person-name{ font-size: 23px; line-height: 1.15; min-width: 0; }
   .fr-band .cal-mini-btn{ width: 52px; height: 52px; background: var(--surface); }
   .fr-band .points-badge{ font-size: 16px; padding: 4px 10px; }
   .fr-band .progress-track{ height: 14px; background: var(--surface); }
@@ -178,7 +178,7 @@
   .pr-entry.flash{ box-shadow: 0 0 0 4px var(--marigold), var(--shadow); }
   .pr-entry-main{ flex:1; min-width:0; display:flex; flex-direction:column; gap:6px; }
   .pr-entry-top{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-  .pr-entry-name{ font-family:'Fraunces',serif; font-weight:600; font-size:22px; line-height:1.15; overflow-wrap:anywhere; margin-right:auto; }
+  .pr-entry-name{ font-family:'Fraunces',serif; font-weight:600; font-size:22px; line-height:1.15; margin-right:auto; }
   .pr-entry-badges{ display:flex; gap:4px; flex-wrap:wrap; }
   .pr-entry .points-badge{ font-size:16px; padding: 3px 8px; }
   .pr-entry-prog{ display:flex; flex-direction:column; gap:4px; }
@@ -207,7 +207,6 @@
     .people-rail{ grid-template-columns: minmax(0,1fr); gap: 10px; }
     .pr-rail{ flex-direction: row; overflow-x: auto; overscroll-behavior-x: contain; padding: 4px 4px 6px 4px; }
     .pr-entry{ width:auto; flex: 0 0 auto; min-height: 64px; padding: 6px 16px 6px 8px; border-radius: 999px; }
-    .pr-entry-name{ white-space: nowrap; overflow-wrap: normal; }
     .pr-entry-badges .points-badge + .points-badge, .pr-entry .progress-label{ display:none; }
     .pr-entry-prog{ width: 110px; }
   }
@@ -236,6 +235,10 @@
   .person-name-row{ display:flex; align-items:center; gap:10px; justify-content:space-between; }
   .person-name-left{ display:flex; align-items:center; gap:10px; min-height:52px; min-width:44px; text-align:left; border-radius: var(--radius-md); }
   .person-name{ font-family:'Fraunces',serif; font-size:20px; font-weight:600; }
+  /* v15.1: a person's name is always one line and never splits mid-word. fitNames() shrinks the
+     font (to a 15px floor) when it doesn't fit; only past the floor does the ellipsis show. */
+  .person-name, .pr-entry-name, .kid-name, .tp-name{ white-space:nowrap; min-width:0; max-width:100%; }
+  .name-clip{ overflow:hidden; text-overflow:ellipsis; }
   .points-badge{ font-size:14px; font-weight:800; color: var(--marigold-ink); background:#FBF0DC; padding:5px 10px; border-radius:999px; white-space:nowrap; }
   .progress-track{ height:12px; background: var(--surface-2); border-radius: 999px; overflow:hidden; }
   .progress-fill{ height:100%; border-radius:999px; transition: width .3s ease; }
@@ -889,6 +892,26 @@
     return streak;
   }
 
+  // v15.1: keep every rendered person name on one line. If a name is wider than its box, step
+  // its font down 1px at a time to a 15px floor (CSS px); past the floor, CSS shows an ellipsis.
+  // The line height is pinned first, so a shrunk name never changes the header's height.
+  // Hidden views are skipped and re-fitted when shown (setView).
+  var NAME_FIT_SELECTOR = ".person-name, .pr-entry-name, .kid-name, .tp-name";
+  var NAME_MIN_PX = 15;
+  function fitNames(){
+    document.querySelectorAll(NAME_FIT_SELECTOR).forEach(function(el){
+      el.style.fontSize = ""; el.style.lineHeight = ""; el.classList.remove("name-clip");
+      if(!el.offsetParent || el.scrollWidth <= el.clientWidth) return;
+      el.style.lineHeight = el.clientHeight + "px";
+      var size = parseFloat(getComputedStyle(el).fontSize);
+      while(el.scrollWidth > el.clientWidth && size > NAME_MIN_PX){
+        size = Math.max(NAME_MIN_PX, size - 1);
+        el.style.fontSize = size + "px";
+      }
+      if(el.scrollWidth > el.clientWidth) el.classList.add("name-clip");
+    });
+  }
+
   function applyZoom(){
     var wrapper = document.getElementById("zoomWrapper");
     wrapper.style.width = (100/BOARD_SCALE) + "%";
@@ -965,6 +988,7 @@
     list.querySelectorAll("[data-today-person]").forEach(function(btn){
       btn.addEventListener("click", function(){ jumpToPersonColumn(this.getAttribute("data-today-person")); });
     });
+    fitNames();
   }
   // A/C: scroll the person's column into view and flash it; B: their band;
   // D: select them in the People Rail and flash their big list.
@@ -1295,6 +1319,7 @@
       var col = document.querySelector('#choreBoard [data-person-col="' + pid + '"]');
       if(col){ try{ col.scrollIntoView({ block:"nearest", inline:"center" }); }catch(e){} }
     });
+    fitNames();
     applyZoom();
   }
   // Shared Tasklist pieces: every layout builds a person's header, task rows, goal
@@ -1400,6 +1425,7 @@
       board.className = "chore-board" + (layout === "C" ? " layout-c" : "") + (state.people.length > 6 ? " many" : "");
       board.innerHTML = models.map(function(m){ return personColumnHtml(m, layout === "C" ? personStyleAttr(m.person) : ""); }).join("");
     }
+    fitNames();
     applyZoom();
   }
   // One delegated handler per task container: whole-row tap toggles, ✎ edits, × skips
@@ -2551,6 +2577,7 @@
     if(view === "today") renderToday();
     if(view === "chores") renderDateBar();
     if(view === "kid") renderKidView();
+    fitNames();
     applyZoom();
   }
   document.getElementById("tabToday").addEventListener("click", function(){ setView("today"); });
@@ -2574,7 +2601,9 @@
   renderCalendar();
   applyZoom();
   checkNightDim();
-  window.addEventListener("resize", applyZoom);
+  window.addEventListener("resize", function(){ fitNames(); applyZoom(); });
+  // Fraunces arrives after the first render and has different widths: re-fit once it's in.
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(fitNames);
   // An iPad left open across midnight: re-resolve Auto (and catch up the day) on return.
   document.addEventListener("visibilitychange", function(){
     if(document.visibilityState === "visible"){ applyTheme(); checkDayRollover(); }
